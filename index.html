@@ -1332,27 +1332,26 @@
 
     // ============ CÁC HÀM FIREBASE ============
 
+    // ⭐ SỬA: Dùng update() thay vì set() để không ghi đè
     function syncToFirebase(silent = false) {
         if (!isAdmin) return;
         if (isSyncing) return;
         isSyncing = true;
         updateSyncStatus('syncing');
 
-        const saveData = {};
+        // Cập nhật từng học sinh riêng lẻ
+        const updates = {};
         students.forEach((student) => {
             if (student.id) {
-                saveData[student.id] = student;
+                updates[`${CLASS_PATH}/students/${student.id}`] = student;
             }
         });
+        updates[`${CLASS_PATH}/updatedAt`] = firebase.database.ServerValue.TIMESTAMP;
 
-        db.ref(`${CLASS_PATH}/students`).set(saveData)
-            .then(() => {
-                return db.ref(`${CLASS_PATH}/updatedAt`).set(firebase.database.ServerValue.TIMESTAMP);
-            })
+        db.ref().update(updates)
             .then(() => {
                 isSyncing = false;
                 updateSyncStatus('synced');
-                // Chỉ hiện toast khi không phải silent (không hiện khi sync tự động)
                 if (!silent) {
                     showToast('✅ Đã đồng bộ dữ liệu lên Firebase');
                 }
@@ -1414,7 +1413,7 @@
         if (syncInterval) clearInterval(syncInterval);
         syncInterval = setInterval(() => {
             if (isAdmin && students.length > 0) {
-                syncToFirebase(true); // silent mode - không hiện toast
+                syncToFirebase(true);
             }
         }, 30000);
 
@@ -1558,7 +1557,7 @@
         event.target.value = '';
     }
 
-    // ============ HÀM IMPORT ============
+    // ============ ⭐ HÀM IMPORT - GỘP DỮ LIỆU ============
 
     function importFile(file) {
         if (!isAdmin) {
@@ -1569,15 +1568,53 @@
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
-                if (!Array.isArray(data)) throw new Error('Dữ liệu phải là mảng học sinh');
-                data.forEach((s, i) => {
+                
+                // Nếu data là object (1 học sinh) thì chuyển thành array
+                let newStudents = [];
+                if (!Array.isArray(data)) {
+                    // Nếu là object đơn lẻ
+                    if (data.id && data.name) {
+                        newStudents = [data];
+                    } else {
+                        // Nếu là object với key là id
+                        newStudents = Object.values(data);
+                    }
+                } else {
+                    newStudents = data;
+                }
+                
+                // Kiểm tra dữ liệu hợp lệ
+                newStudents.forEach((s, i) => {
                     if (!s.id || !s.name) throw new Error(`Học sinh #${i+1} thiếu id hoặc name`);
                 });
                 
-                students = data;
+                // ⭐ QUAN TRỌNG: GỘP dữ liệu thay vì ghi đè
+                // Tạo map từ danh sách hiện tại
+                const existingMap = {};
+                students.forEach(s => {
+                    existingMap[s.id] = s;
+                });
+                
+                // Gộp dữ liệu mới vào
+                let addedCount = 0;
+                let updatedCount = 0;
+                newStudents.forEach(newStudent => {
+                    if (existingMap[newStudent.id]) {
+                        // Học sinh đã tồn tại - cập nhật
+                        existingMap[newStudent.id] = newStudent;
+                        updatedCount++;
+                    } else {
+                        // Học sinh mới - thêm vào
+                        existingMap[newStudent.id] = newStudent;
+                        addedCount++;
+                    }
+                });
+                
+                // Chuyển map thành array
+                students = Object.values(existingMap);
                 importedFileName = file.name;
                 
-                if (students.length > 0) {
+                if (students.length > 0 && !currentStudentId) {
                     currentStudentId = students[0].id;
                 }
                 
@@ -1588,11 +1625,12 @@
                 document.getElementById('fileSize').textContent = `(${(file.size/1024).toFixed(1)} KB)`;
                 document.getElementById('importArea').classList.add('has-data');
                 
-                showToast('⏳ Đang lưu dữ liệu vào Firebase...', 'info');
+                showToast(`📥 Import: +${addedCount} mới, ${updatedCount} cập nhật. Tổng: ${students.length} học sinh`, 'info');
                 updateSyncStatus('syncing', 'Đang lưu...');
                 
+                // Lưu toàn bộ dữ liệu đã merge lên Firebase
                 const saveData = {};
-                data.forEach((student) => {
+                students.forEach((student) => {
                     if (student.id) {
                         saveData[student.id] = student;
                     }
@@ -1603,7 +1641,7 @@
                         return db.ref(`${CLASS_PATH}/updatedAt`).set(firebase.database.ServerValue.TIMESTAMP);
                     })
                     .then(() => {
-                        showToast(`✅ Import ${students.length} học sinh thành công`);
+                        showToast(`✅ Đã lưu ${students.length} học sinh lên Firebase`);
                         updateSyncStatus('synced', `(${students.length} học sinh)`);
                         loadFromFirebase();
                     })
@@ -1729,7 +1767,7 @@
         populateCompareCheckboxes();
     }
 
-    // ============ HÀM RENDER CHI TIẾT - ĐÃ SỬA LỖI ============
+    // ============ HÀM RENDER CHI TIẾT ============
 
     function renderDetailById(id) {
         const student = students.find(s => s.id === id);
@@ -1755,14 +1793,12 @@
             tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#6b8c7e;">Chưa có điểm</td></tr>`;
         } else {
             let html = '';
-            // Sắp xếp theo tháng để hiển thị đúng thứ tự
             const sortedScores = [...nums].sort((a,b) => {
                 if (a.month !== b.month) return a.month - b.month;
                 return (a.testName || '').localeCompare(b.testName || '');
             });
             
             sortedScores.forEach((sc) => {
-                // Tìm index thực tế trong mảng gốc để xóa đúng
                 const realIndex = nums.indexOf(sc);
                 const cls = sc.score >= 8 ? 'score-high' : (sc.score < 5 ? 'score-low' : '');
                 const isAdmin = isAdminMode;
@@ -1791,7 +1827,7 @@
         }
     }
 
-    // ============ HÀM CẬP NHẬT ĐIỂM - ĐÃ SỬA ============
+    // ============ HÀM CẬP NHẬT ĐIỂM ============
 
     function updateScore(index, field, value) {
         if (!isAdmin) return;
@@ -1821,7 +1857,7 @@
         showToast('✅ Đã cập nhật điểm');
     }
 
-    // ============ HÀM XÓA ĐIỂM - ĐÃ SỬA ============
+    // ============ HÀM XÓA ĐIỂM ============
 
     function deleteScore(index) {
         if (!isAdmin) return;
@@ -1841,7 +1877,7 @@
         showToast(`✅ Đã xóa điểm: ${deletedScore.testName || 'Kiểm tra'} (${deletedScore.score})`);
     }
 
-    // ============ HÀM THÊM ĐIỂM - ĐÃ SỬA ============
+    // ============ HÀM THÊM ĐIỂM ============
 
     function addScoreRow() {
         if (!isAdmin) return;
@@ -1852,7 +1888,6 @@
         }
         if (!student.scores) student.scores = [];
         
-        // Tìm tháng lớn nhất hiện tại
         let maxMonth = 1;
         student.scores.forEach(sc => {
             if (sc.month && sc.month > maxMonth) maxMonth = sc.month;
