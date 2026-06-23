@@ -10,7 +10,7 @@
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
     </script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js">
     </script>
     <style>
         /* ===== RESET & BASE ===== */
@@ -670,7 +670,7 @@
 
     <script>
         // ============================================================
-        // 1. CẤU HÌNH FIREBASE (ĐÃ CẬP NHẬT)
+        // 1. CẤU HÌNH FIREBASE - REALTIME DATABASE
         // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyAGr5zM79FPI5X8cL0ePNSoHU8o8rhfvOI",
@@ -685,7 +685,10 @@
 
         // Khởi tạo Firebase
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const database = firebase.database();
+
+        // Tham chiếu đến node "students" trong Realtime Database
+        const studentsRef = database.ref('students');
 
         // ============================================================
         // 2. BIẾN TOÀN CỤ
@@ -700,32 +703,41 @@
         let compareChartInstance = null;
 
         // ============================================================
-        // 3. HÀM FIREBASE CRUD
+        // 3. HÀM FIREBASE CRUD (REALTIME DATABASE)
         // ============================================================
 
+        // Lắng nghe dữ liệu realtime
         function listenStudents() {
-            db.collection('students')
-                .orderBy('name')
-                .onSnapshot((snapshot) => {
-                    students = [];
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
+            studentsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                students = [];
+                
+                if (data) {
+                    // Chuyển đổi object thành array
+                    Object.keys(data).forEach((key) => {
+                        const student = data[key];
                         students.push({
-                            id: doc.id,
-                            name: data.name || 'Chưa có tên',
-                            scores: data.scores || [],
-                            examNames: data.examNames || []
+                            id: key,
+                            name: student.name || 'Chưa có tên',
+                            scores: student.scores || [],
+                            examNames: student.examNames || []
                         });
                     });
-                    updateUI();
-                    updateStatus('online');
-                }, (error) => {
-                    console.error('Lỗi lắng nghe:', error);
-                    updateStatus('offline');
-                    showToast('Lỗi kết nối Firebase!', 'error');
-                });
+                    
+                    // Sắp xếp theo tên
+                    students.sort((a, b) => a.name.localeCompare(b.name));
+                }
+                
+                updateUI();
+                updateStatus('online');
+            }, (error) => {
+                console.error('Lỗi lắng nghe:', error);
+                updateStatus('offline');
+                showToast('Lỗi kết nối Firebase!', 'error');
+            });
         }
 
+        // Thêm học sinh mới
         async function addStudent() {
             const nameInput = document.getElementById('studentName');
             const name = nameInput.value.trim();
@@ -741,11 +753,13 @@
             }
 
             try {
-                await db.collection('students').add({
+                // Tạo key mới và push dữ liệu
+                const newStudentRef = studentsRef.push();
+                await newStudentRef.set({
                     name: name,
                     scores: tempScores,
                     examNames: tempExamNames,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
                 });
 
                 showToast(`✅ Đã thêm học sinh: ${name}`);
@@ -756,11 +770,12 @@
             }
         }
 
+        // Xóa học sinh
         async function deleteStudent(id, name) {
             if (!confirm(`Bạn có chắc muốn xóa học sinh "${name}"?`)) return;
 
             try {
-                await db.collection('students').doc(id).delete();
+                await studentsRef.child(id).remove();
                 showToast(`🗑️ Đã xóa: ${name}`);
                 if (selectedStudentId === id) {
                     selectedStudentId = null;
@@ -771,9 +786,10 @@
             }
         }
 
+        // Cập nhật học sinh
         async function updateStudent(id, name, scores, examNames) {
             try {
-                await db.collection('students').doc(id).update({
+                await studentsRef.child(id).update({
                     name: name,
                     scores: scores,
                     examNames: examNames
@@ -1274,11 +1290,12 @@
             if (e.key === 'Enter') addStudent();
         });
 
+        // Bắt đầu lắng nghe dữ liệu từ Realtime Database
         listenStudents();
         renderIndividualChart(null);
 
-        console.log('🌸 Ứng dụng đã sẵn sàng với màu tím pastel!');
-        console.log('📌 Dữ liệu được lưu trên Firebase Cloud');
+        console.log('🌸 Ứng dụng đã sẵn sàng với Realtime Database!');
+        console.log('📌 Dữ liệu được lưu tại: https://hethong-tuvung-default-rtdb.firebaseio.com/students');
         console.log('💡 Bạn có thể truy cập từ mọi thiết bị!');
     </script>
 
