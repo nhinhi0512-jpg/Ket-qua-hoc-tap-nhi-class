@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quản lý Học tập - Lớp Tiếng Anh cô Quỳnh Nhi</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -96,15 +98,6 @@
 
         .btn-danger:hover {
             background: #c0392b;
-        }
-
-        .btn-primary {
-            background: #52b788;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #40916c;
         }
 
         .mode-badge {
@@ -573,48 +566,29 @@
             margin-top: 2px;
         }
 
-        /* JSON Editor */
-        .json-editor-area {
-            margin-top: 16px;
-            border-top: 2px solid #e8f5ee;
-            padding-top: 16px;
-        }
-
-        .json-editor-area .editor-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .json-editor-area .editor-header h4 {
-            color: #2d6a4f;
-            font-size: 0.95rem;
-        }
-
-        .json-editor-area textarea {
+        .comparison-item select {
             width: 100%;
-            min-height: 300px;
-            padding: 12px;
+            padding: 6px 10px;
             border: 2px solid #d8eddd;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85rem;
-            background: #f8fbf9;
-            resize: vertical;
-            transition: border 0.2s;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: white;
+            margin-top: 2px;
+            cursor: pointer;
         }
 
-        .json-editor-area textarea:focus {
+        .comparison-item select:focus {
             border-color: #52b788;
             outline: none;
         }
 
-        .json-editor-area .editor-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-            flex-wrap: wrap;
+        .trend-up {
+            color: #2d6a4f;
+        }
+
+        .trend-down {
+            color: #e74c3c;
         }
 
         /* ===== STUDENT VIEW ===== */
@@ -846,45 +820,40 @@
             cursor: not-allowed;
         }
 
-        /* Loading spinner */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.8);
-            display: none;
-            justify-content: center;
+        /* Firebase sync status */
+        .sync-status {
+            display: inline-flex;
             align-items: center;
-            z-index: 9998;
+            gap: 6px;
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.15);
         }
 
-        .loading-overlay.show {
-            display: flex;
+        .sync-status.synced {
+            background: rgba(46, 204, 113, 0.3);
+            color: #2ecc71;
         }
 
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #52b788;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+        .sync-status.syncing {
+            background: rgba(241, 196, 15, 0.3);
+            color: #f1c40f;
+            animation: pulse 1s infinite;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .sync-status.error {
+            background: rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
 <body>
-
-<!-- ===== LOADING OVERLAY ===== -->
-<div class="loading-overlay" id="loadingOverlay">
-    <div class="spinner"></div>
-</div>
 
 <!-- ===== LOGIN OVERLAY ===== -->
 <div class="login-overlay" id="loginOverlay">
@@ -911,6 +880,7 @@
             <div class="subtitle">Lớp Tiếng Anh cô Quỳnh Nhi</div>
         </div>
         <div class="header-right">
+            <span class="sync-status" id="syncStatus">☁️ Đồng bộ</span>
             <span class="mode-badge" id="modeBadge">👁️ Chế độ xem</span>
             <button class="btn btn-white" onclick="toggleAdminMode()" id="modeToggleBtn">🔑 Đăng nhập Admin</button>
         </div>
@@ -1011,26 +981,21 @@
                     </div>
 
                     <div style="margin-top:16px;">
-                        <div style="font-weight:600; color:#2d6a4f; margin-bottom:6px; font-size:0.9rem;">📊 So sánh với lớp</div>
+                        <div style="font-weight:600; color:#2d6a4f; margin-bottom:6px; font-size:0.9rem;">📊 So sánh</div>
                         <div class="comparison-grid" id="comparisonGrid">
-                            <div class="comparison-item" style="grid-column: 1 / -1;">
-                                <div class="label">📊 So với trung bình lớp</div>
-                                <div class="value" id="compareClass">-</div>
+                            <div class="comparison-item">
+                                <div class="label">📈 So với tháng trước</div>
+                                <div class="value" id="compareMonth">-</div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- JSON Editor -->
-                    <div class="json-editor-area admin-only-panel">
-                        <div class="editor-header">
-                            <h4>✏️ Chỉnh sửa dữ liệu JSON</h4>
-                            <span style="font-size:0.7rem; color:#6b8c7e;">Chỉnh sửa trực tiếp dữ liệu của học sinh này</span>
-                        </div>
-                        <textarea id="jsonEditor" placeholder="Dữ liệu JSON của học sinh sẽ hiển thị ở đây..."></textarea>
-                        <div class="editor-actions">
-                            <button class="btn btn-primary" onclick="saveJsonEdit()">💾 Lưu thay đổi</button>
-                            <button class="btn btn-white" onclick="resetJsonEditor()">🔄 Khôi phục</button>
-                            <button class="btn btn-outline" onclick="copyJsonData()" style="background:#f8fbf9; color:#2d6a4f; border:2px solid #d8eddd;">📋 Sao chép</button>
+                            <div class="comparison-item">
+                                <div class="label">📊 So với học sinh</div>
+                                <div class="value" id="compareStudent">
+                                    <select id="compareStudentSelect" onchange="updateComparison()">
+                                        <option value="">-- Chọn học sinh --</option>
+                                    </select>
+                                    <div style="margin-top: 6px; font-size: 0.9rem; font-weight: 600;" id="compareStudentResult">-</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1103,21 +1068,24 @@
 </div>
 
 <script>
+    // ===== FIREBASE CONFIG =====
+    const firebaseConfig = {
+        apiKey: "AIzaSyAGr5zM79FPI5X8cL0ePNSoHU8o8rhfvOI",
+        authDomain: "hethong-tuvung.firebaseapp.com",
+        databaseURL: "https://hethong-tuvung-default-rtdb.firebaseio.com",
+        projectId: "hethong-tuvung",
+        storageBucket: "hethong-tuvung.firebasestorage.app",
+        messagingSenderId: "526320623944",
+        appId: "1:526320623944:web:e937b1eb4ee2bdf820937d",
+        measurementId: "G-GBNZTZ047L"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     // ===== CONFIG =====
     const ADMIN_EMAIL = 'ptquynhnhi05121999@gmail.com';
     const ADMIN_PASSWORD = 'admin123';
-
-    // Firebase Configuration
-    const firebaseConfig = {
-          apiKey: "AIzaSyAGr5zM79FPI5X8cL0ePNSoHU8o8rhfvOI",
-          authDomain: "hethong-tuvung.firebaseapp.com",
-          databaseURL: "https://hethong-tuvung-default-rtdb.firebaseio.com",
-          projectId: "hethong-tuvung",
-          storageBucket: "hethong-tuvung.firebasestorage.app",
-          messagingSenderId: "526320623944",
-          appId: "1:526320623944:web:e937b1eb4ee2bdf820937d",
-          measurementId: "G-GBNZTZ047L"
-    };
 
     // ===== STATE =====
     let students = [];
@@ -1126,95 +1094,7 @@
     let isAdmin = false;
     let isAdminMode = false;
     let chartInstance = null;
-    let db = null;
-    let isLoading = false;
-
-    // ===== FIREBASE INIT =====
-    function initFirebase() {
-        try {
-            if (typeof firebase !== 'undefined') {
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                db = firebase.database();
-                console.log('🔥 Firebase initialized successfully');
-                return true;
-            } else {
-                console.warn('Firebase SDK not loaded');
-                return false;
-            }
-        } catch (e) {
-            console.error('Firebase init error:', e);
-            return false;
-        }
-    }
-
-    // ===== LOAD DATA FROM FIREBASE =====
-    function loadDataFromFirebase() {
-        if (!db) {
-            if (!initFirebase()) {
-                showToast('❌ Không thể kết nối Firebase', 'error');
-                return;
-            }
-        }
-
-        showLoading(true);
-        const studentsRef = db.ref('students');
-        studentsRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                students = Object.values(data);
-                importedFileName = 'Firebase Data';
-                document.getElementById('fileInfo').classList.add('show');
-                document.getElementById('fileName').textContent = '📡 Firebase';
-                document.getElementById('fileSize').textContent = `(${students.length} học sinh)`;
-                document.getElementById('importArea').classList.add('has-data');
-                if (students.length > 0 && !currentStudentId) {
-                    currentStudentId = students[0].id;
-                }
-                renderAll();
-                showToast(`✅ Đã tải ${students.length} học sinh từ Firebase`);
-            } else {
-                students = [];
-                renderAll();
-                showToast('📭 Chưa có dữ liệu trên Firebase');
-            }
-            showLoading(false);
-        }, (error) => {
-            console.error('Firebase read error:', error);
-            showToast('❌ Lỗi đọc dữ liệu từ Firebase', 'error');
-            showLoading(false);
-        });
-    }
-
-    // ===== SAVE DATA TO FIREBASE =====
-    function saveDataToFirebase() {
-        if (!db) {
-            if (!initFirebase()) {
-                showToast('❌ Không thể kết nối Firebase', 'error');
-                return;
-            }
-        }
-
-        showLoading(true);
-        const studentsRef = db.ref('students');
-        // Convert array to object with keys
-        const data = {};
-        students.forEach((student, index) => {
-            data[index] = student;
-        });
-        
-        studentsRef.set(data)
-            .then(() => {
-                showToast('✅ Đã lưu dữ liệu lên Firebase');
-                showLoading(false);
-            })
-            .catch((error) => {
-                console.error('Firebase write error:', error);
-                showToast('❌ Lỗi lưu dữ liệu lên Firebase: ' + error.message, 'error');
-                showLoading(false);
-            });
-    }
+    let isSyncing = false;
 
     // ===== UTILITY =====
     function showToast(message, type = 'success') {
@@ -1224,11 +1104,6 @@
         toast.textContent = message;
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
-    }
-
-    function showLoading(show) {
-        isLoading = show;
-        document.getElementById('loadingOverlay').classList.toggle('show', show);
     }
 
     function getMonthName(m) {
@@ -1248,6 +1123,88 @@
         return nums.reduce((a,b) => a + b.score, 0) / nums.length;
     }
 
+    function getStudentAvgByMonth(student, month) {
+        if (!student.scores) return null;
+        const scores = student.scores.filter(sc => sc.month === month);
+        if (scores.length === 0) return null;
+        return scores.reduce((a,b) => a + b.score, 0) / scores.length;
+    }
+
+    // ===== FIREBASE SYNC =====
+    function updateSyncStatus(status, message = '') {
+        const el = document.getElementById('syncStatus');
+        el.className = `sync-status ${status}`;
+        const icons = {
+            synced: '✅',
+            syncing: '🔄',
+            error: '❌'
+        };
+        const texts = {
+            synced: 'Đã đồng bộ',
+            syncing: 'Đang đồng bộ...',
+            error: 'Lỗi đồng bộ'
+        };
+        el.textContent = `${icons[status] || '☁️'} ${texts[status] || 'Đồng bộ'}${message ? ' ' + message : ''}`;
+    }
+
+    function syncToFirebase() {
+        if (!isAdmin) return;
+        if (isSyncing) return;
+        isSyncing = true;
+        updateSyncStatus('syncing');
+
+        const data = {
+            students: students,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        db.ref('classData').set(data)
+            .then(() => {
+                isSyncing = false;
+                updateSyncStatus('synced');
+                showToast('✅ Đã đồng bộ dữ liệu lên Firebase');
+            })
+            .catch((error) => {
+                isSyncing = false;
+                updateSyncStatus('error', error.message);
+                showToast('❌ Lỗi đồng bộ: ' + error.message, 'error');
+            });
+    }
+
+    function loadFromFirebase() {
+        updateSyncStatus('syncing');
+        db.ref('classData').once('value')
+            .then((snapshot) => {
+                const data = snapshot.val();
+                if (data && data.students) {
+                    students = data.students;
+                    importedFileName = 'firebase_data.json';
+                    document.getElementById('fileInfo').classList.add('show');
+                    document.getElementById('fileName').textContent = 'firebase_data.json';
+                    document.getElementById('fileSize').textContent = `(Đồng bộ từ cloud)`;
+                    document.getElementById('importArea').classList.add('has-data');
+                    if (students.length > 0 && !currentStudentId) {
+                        currentStudentId = students[0].id;
+                    }
+                    renderAll();
+                    updateSyncStatus('synced');
+                    showToast(`✅ Đã tải ${students.length} học sinh từ Firebase`);
+                } else {
+                    updateSyncStatus('synced', '(chưa có dữ liệu)');
+                    showToast('ℹ️ Chưa có dữ liệu trên Firebase', 'error');
+                }
+            })
+            .catch((error) => {
+                updateSyncStatus('error', error.message);
+                showToast('❌ Lỗi tải dữ liệu: ' + error.message, 'error');
+            });
+    }
+
+    // ===== URL PARAM =====
+    function getUrlParam(p) {
+        return new URLSearchParams(window.location.search).get(p);
+    }
+
     // ===== AUTH =====
     function loginAdmin() {
         const email = document.getElementById('loginEmail').value.trim();
@@ -1262,6 +1219,8 @@
             sessionStorage.setItem('isAdmin', 'true');
             enableAdminMode();
             showToast('✅ Đăng nhập Admin thành công!');
+            // Auto load from Firebase after login
+            loadFromFirebase();
         } else {
             err.classList.add('show');
             showToast('❌ Email hoặc mật khẩu không đúng!', 'error');
@@ -1287,6 +1246,7 @@
                 enableAdminMode();
                 updateUI();
                 showToast('✅ Đã khôi phục phiên Admin');
+                loadFromFirebase();
                 return;
             }
             document.getElementById('loginOverlay').classList.add('show');
@@ -1354,14 +1314,14 @@
                 });
                 students = data;
                 importedFileName = file.name;
-                // Save to Firebase
-                saveDataToFirebase();
                 renderAll();
                 showToast(`✅ Import ${students.length} học sinh thành công`);
                 document.getElementById('fileInfo').classList.add('show');
                 document.getElementById('fileName').textContent = file.name;
                 document.getElementById('fileSize').textContent = `(${(file.size/1024).toFixed(1)} KB)`;
                 document.getElementById('importArea').classList.add('has-data');
+                // Auto sync to Firebase
+                syncToFirebase();
             } catch (error) {
                 showToast(`❌ Lỗi: ${error.message}`, 'error');
             }
@@ -1391,7 +1351,7 @@
         renderDetailById(currentStudentId);
         renderStudentView();
         populateStudentSelect();
-        updateJsonEditor();
+        populateCompareSelect();
     }
 
     function renderStats() {
@@ -1444,7 +1404,7 @@
         renderDetailById(id);
         renderStudentView();
         populateStudentSelect();
-        updateJsonEditor();
+        populateCompareSelect();
     }
 
     function renderDetailById(id) {
@@ -1478,75 +1438,92 @@
             tbody.innerHTML = html;
         }
 
-        // Comparison - only compare with class average
-        const compareClass = document.getElementById('compareClass');
-        const sAvg = getStudentAvg(student);
-        const allAvg = students.length ? students.reduce((s, st) => s + getStudentAvg(st), 0) / students.length : 0;
-        if (allAvg > 0) {
-            const diff = sAvg - allAvg;
-            compareClass.innerHTML = diff > 0 ? `<span class="trend-up">📈 Cao hơn ${diff.toFixed(1)}</span>` :
-                                     diff < 0 ? `<span class="trend-down">📉 Thấp hơn ${Math.abs(diff).toFixed(1)}</span>` :
-                                     '➖ Bằng TB lớp';
+        // Comparison
+        const compareMonth = document.getElementById('compareMonth');
+        const numsSorted = [...nums].sort((a,b) => a.month - b.month);
+        if (numsSorted.length >= 2) {
+            const last = numsSorted[numsSorted.length-1];
+            const prev = numsSorted[numsSorted.length-2];
+            const diff = last.score - prev.score;
+            compareMonth.innerHTML = diff > 0 ? `<span class="trend-up">📈 Tăng ${diff.toFixed(1)}</span>` :
+                                      diff < 0 ? `<span class="trend-down">📉 Giảm ${Math.abs(diff).toFixed(1)}</span>` :
+                                      '➖ Không đổi';
         } else {
-            compareClass.textContent = '📊 Chưa có dữ liệu';
+            compareMonth.textContent = '📊 Chưa đủ dữ liệu';
         }
+
+        // Update comparison with selected student
+        updateComparison();
     }
 
-    // ===== JSON EDITOR =====
-    function updateJsonEditor() {
-        const student = students.find(s => s.id === currentStudentId);
-        if (!student) {
-            document.getElementById('jsonEditor').value = '';
-            return;
-        }
-        document.getElementById('jsonEditor').value = JSON.stringify(student, null, 2);
-    }
-
-    function saveJsonEdit() {
-        if (!isAdmin) {
-            showToast('❌ Cần quyền Admin', 'error');
-            return;
-        }
-        try {
-            const newData = JSON.parse(document.getElementById('jsonEditor').value);
-            if (!newData.id || !newData.name) {
-                showToast('❌ Dữ liệu JSON không hợp lệ (thiếu id hoặc name)', 'error');
-                return;
+    // ===== COMPARISON WITH STUDENT =====
+    function populateCompareSelect() {
+        const select = document.getElementById('compareStudentSelect');
+        const currentVal = select.value;
+        select.innerHTML = '<option value="">-- Chọn học sinh --</option>';
+        students.forEach(s => {
+            if (s.id !== currentStudentId) {
+                select.innerHTML += `<option value="${s.id}">${s.name}</option>`;
             }
-            const index = students.findIndex(s => s.id === currentStudentId);
-            if (index === -1) {
-                showToast('❌ Không tìm thấy học sinh', 'error');
-                return;
-            }
-            students[index] = newData;
-            saveDataToFirebase();
-            renderAll();
-            showToast('✅ Đã cập nhật dữ liệu học sinh');
-        } catch (e) {
-            showToast('❌ Lỗi JSON: ' + e.message, 'error');
-        }
-    }
-
-    function resetJsonEditor() {
-        updateJsonEditor();
-        showToast('🔄 Đã khôi phục dữ liệu gốc');
-    }
-
-    function copyJsonData() {
-        const text = document.getElementById('jsonEditor').value;
-        if (!text) {
-            showToast('❌ Không có dữ liệu để sao chép', 'error');
-            return;
-        }
-        navigator.clipboard.writeText(text).then(() => {
-            showToast('✅ Đã sao chép JSON vào clipboard');
-        }).catch(() => {
-            // Fallback
-            const textarea = document.getElementById('jsonEditor');
-            textarea.select();
-            document.execCommand('copy');
-            showToast('✅ Đã sao chép JSON vào clipboard');
         });
+        if (currentVal && students.some(s => s.id === currentVal) && currentVal !== currentStudentId) {
+            select.value = currentVal;
+        }
+        updateComparison();
+    }
+
+    function updateComparison() {
+        const student = students.find(s => s.id === currentStudentId);
+        const select = document.getElementById('compareStudentSelect');
+        const resultEl = document.getElementById('compareStudentResult');
+        
+        if (!student || !select.value) {
+            resultEl.textContent = '— Chọn học sinh để so sánh';
+            return;
+        }
+
+        const compareStudent = students.find(s => s.id === select.value);
+        if (!compareStudent) {
+            resultEl.textContent = '— Không tìm thấy học sinh';
+            return;
+        }
+
+        const myAvg = getStudentAvg(student);
+        const theirAvg = getStudentAvg(compareStudent);
+        const diff = myAvg - theirAvg;
+
+        if (diff > 0) {
+            resultEl.innerHTML = `<span class="trend-up">📈 Cao hơn ${diff.toFixed(1)} điểm</span>`;
+        } else if (diff < 0) {
+            resultEl.innerHTML = `<span class="trend-down">📉 Thấp hơn ${Math.abs(diff).toFixed(1)} điểm</span>`;
+        } else {
+            resultEl.innerHTML = '➖ Bằng điểm nhau';
+        }
+
+        // Also show comparison by month if available
+        const myNums = getNumericScores(student);
+        const theirNums = getNumericScores(compareStudent);
+        if (myNums.length > 0 && theirNums.length > 0) {
+            const months = new Set();
+            myNums.forEach(s => months.add(s.month));
+            theirNums.forEach(s => months.add(s.month));
+            if (months.size > 0) {
+                let monthDetails = '';
+                months.forEach(m => {
+                    const myScore = getStudentAvgByMonth(student, m);
+                    const theirScore = getStudentAvgByMonth(compareStudent, m);
+                    if (myScore !== null && theirScore !== null) {
+                        const d = myScore - theirScore;
+                        monthDetails += `<div style="font-size:0.8rem;color:#6b8c7e;margin-top:2px;">
+                            ${getMonthName(m)}: ${d > 0 ? '📈' : d < 0 ? '📉' : '➖'} ${d > 0 ? '+' : ''}${d.toFixed(1)}
+                        </div>`;
+                    }
+                });
+                if (monthDetails) {
+                    resultEl.innerHTML += `<div style="margin-top:6px;font-size:0.8rem;font-weight:400;color:#6b8c7e;border-top:1px solid #eef6f2;padding-top:6px;">Theo từng tháng:${monthDetails}</div>`;
+                }
+            }
+        }
     }
 
     // ===== UPDATE FUNCTIONS =====
@@ -1555,8 +1532,8 @@
         const student = students.find(s => s.id === currentStudentId);
         if (!student) return;
         student.absences = parseInt(document.getElementById('detailAbsences').value) || 0;
-        saveDataToFirebase();
         renderAll();
+        syncToFirebase();
         showToast(`✅ Đã cập nhật nghỉ: ${student.absences} buổi`);
     }
 
@@ -1565,7 +1542,7 @@
         const student = students.find(s => s.id === currentStudentId);
         if (!student) return;
         student.note = document.getElementById('detailNote').value;
-        saveDataToFirebase();
+        syncToFirebase();
         showToast(`✅ Đã lưu nhận xét`);
     }
 
@@ -1577,17 +1554,8 @@
         currentStudentId = null;
         document.getElementById('fileInfo').classList.remove('show');
         document.getElementById('importArea').classList.remove('has-data');
-        // Clear Firebase
-        if (db) {
-            db.ref('students').set({})
-                .then(() => {
-                    showToast('🗑️ Đã xóa dữ liệu khỏi Firebase');
-                })
-                .catch((e) => {
-                    console.error('Clear error:', e);
-                });
-        }
         renderAll();
+        syncToFirebase();
         showToast('🗑️ Đã xóa dữ liệu');
     }
 
@@ -1623,7 +1591,7 @@
             if (isAdminMode) {
                 renderDetailById(currentStudentId);
                 renderStudentList();
-                updateJsonEditor();
+                populateCompareSelect();
             }
         }
     }
@@ -1764,12 +1732,66 @@
         });
     }
 
-    // ===== INIT =====
+    // ===== SAMPLE DATA =====
+    function loadSampleData() {
+        const sample = [
+            {
+                id: 'HS001',
+                name: 'Nguyễn Văn An',
+                absences: 2,
+                note: 'Học sinh chăm chỉ, có tiến bộ rõ rệt.',
+                scores: [
+                    { month: 1, testName: 'Kiểm tra đầu vào', score: 6.5 },
+                    { month: 2, testName: 'Giữa kỳ 1', score: 7.0 },
+                    { month: 3, testName: 'Cuối kỳ 1', score: 8.5 },
+                    { month: 4, testName: 'Giữa kỳ 2', score: 8.0 }
+                ]
+            },
+            {
+                id: 'HS002',
+                name: 'Trần Thị Bình',
+                absences: 0,
+                note: 'Rất chăm chỉ, khả năng nghe nói tốt.',
+                scores: [
+                    { month: 1, testName: 'Kiểm tra đầu vào', score: 8.0 },
+                    { month: 2, testName: 'Giữa kỳ 1', score: 8.5 },
+                    { month: 3, testName: 'Cuối kỳ 1', score: 9.0 },
+                    { month: 4, testName: 'Giữa kỳ 2', score: 9.5 }
+                ]
+            },
+            {
+                id: 'HS003',
+                name: 'Lê Văn Cường',
+                absences: 3,
+                note: 'Cần cố gắng hơn ở phần từ vựng.',
+                scores: [
+                    { month: 1, testName: 'Kiểm tra đầu vào', score: 5.0 },
+                    { month: 2, testName: 'Giữa kỳ 1', score: 5.5 },
+                    { month: 3, testName: 'Cuối kỳ 1', score: 6.0 },
+                    { month: 4, testName: 'Giữa kỳ 2', score: 6.5 }
+                ]
+            }
+        ];
+        students = sample;
+        importedFileName = 'sample_data.json';
+        document.getElementById('fileInfo').classList.add('show');
+        document.getElementById('fileName').textContent = 'sample_data.json';
+        document.getElementById('fileSize').textContent = '(Dữ liệu mẫu)';
+        document.getElementById('importArea').classList.add('has-data');
+        currentStudentId = students[0].id;
+        renderAll();
+        syncToFirebase();
+        showToast('✅ Đã tải dữ liệu mẫu (3 học sinh)');
+    }
+
+    // ===== CHECK SESSION & INIT =====
     function init() {
         // Add buttons
         document.querySelector('.header-right').insertAdjacentHTML('afterbegin', `
-            <button class="btn btn-white" onclick="exportData()">📥 Xuất JSON</button>
+            <button class="btn btn-white" onclick="loadSampleData()" style="background:#d8eddd; color:#2d6a4f;">📋 Tải mẫu</button>
+            <button class="btn btn-white admin-only" onclick="exportData()">📥 Xuất JSON</button>
             <button class="btn btn-outline admin-only" onclick="document.getElementById('fileInput').click()">📤 Import JSON</button>
+            <button class="btn btn-white admin-only" onclick="syncToFirebase()" style="background:#d8eddd; color:#2d6a4f;">☁️ Sync</button>
             <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFile(event)">
         `);
 
@@ -1778,10 +1800,9 @@
             isAdmin = true;
             isAdminMode = true;
             enableAdminMode();
+            // Try to load from Firebase
+            loadFromFirebase();
         }
-
-        // Load data from Firebase
-        loadDataFromFirebase();
 
         const mode = getUrlParam('mode');
         if (mode === 'admin') {
@@ -1793,6 +1814,14 @@
         renderAll();
         updateUI();
 
+        // Auto select first student in student view
+        if (students.length > 0 && !currentStudentId) {
+            currentStudentId = students[0].id;
+            renderStudentView();
+            populateStudentSelect();
+            populateCompareSelect();
+        }
+
         // Click outside login
         document.getElementById('loginOverlay').addEventListener('click', (e) => {
             if (e.target === e.currentTarget && !isAdmin) {
@@ -1801,13 +1830,6 @@
         });
     }
 
-    function getUrlParam(p) {
-        return new URLSearchParams(window.location.search).get(p);
-    }
-
-    // Initialize Firebase first
-    initFirebase();
-    // Then initialize app
     init();
 </script>
 </body>
