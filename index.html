@@ -1217,14 +1217,12 @@
         isSyncing = true;
         updateSyncStatus('syncing');
 
-        // Lưu từng học sinh riêng biệt để tránh ghi đè
         const updates = {};
         students.forEach((student) => {
             if (student.id) {
                 updates[`students/${student.id}`] = student;
             }
         });
-        // Thêm timestamp
         updates['updatedAt'] = firebase.database.ServerValue.TIMESTAMP;
 
         db.ref('classData').update(updates)
@@ -1245,7 +1243,6 @@
             .then((snapshot) => {
                 const data = snapshot.val();
                 if (data) {
-                    // Convert object to array
                     const loadedStudents = Object.values(data);
                     if (loadedStudents.length > 0) {
                         students = loadedStudents;
@@ -1261,7 +1258,6 @@
                         updateSyncStatus('synced');
                         showToast(`✅ Đã tải ${students.length} học sinh từ Firebase`);
                     } else {
-                        // Không có dữ liệu, reset về trống
                         students = [];
                         currentStudentId = null;
                         document.getElementById('fileInfo').classList.remove('show');
@@ -1270,7 +1266,6 @@
                         updateSyncStatus('synced', '(chưa có dữ liệu)');
                     }
                 } else {
-                    // Không có dữ liệu, reset về trống
                     students = [];
                     currentStudentId = null;
                     document.getElementById('fileInfo').classList.remove('show');
@@ -1287,14 +1282,12 @@
 
     function startAutoSync() {
         if (syncInterval) clearInterval(syncInterval);
-        // Auto sync every 30 seconds
         syncInterval = setInterval(() => {
             if (isAdmin && students.length > 0) {
                 syncToFirebase();
             }
         }, 30000);
 
-        // Listen for real-time changes - chỉ lắng nghe khi không ở chế độ admin
         if (!isFirebaseListenerActive) {
             isFirebaseListenerActive = true;
             db.ref('classData/students').on('value', (snapshot) => {
@@ -1309,7 +1302,6 @@
                         renderAll();
                         updateSyncStatus('synced', '(tự động)');
                     } else {
-                        // Dữ liệu trống
                         students = [];
                         currentStudentId = null;
                         renderAll();
@@ -1353,11 +1345,9 @@
             clearInterval(syncInterval);
             syncInterval = null;
         }
-        // Không tắt listener, vẫn lắng nghe ở chế độ xem
         disableAdminMode();
         updateUI();
         showToast('👋 Đã đăng xuất');
-        // Reload data để hiển thị chế độ xem
         loadFromFirebase();
     }
 
@@ -1451,12 +1441,24 @@
                 });
                 students = data;
                 importedFileName = file.name;
+                
+                // Set current student to first one
+                if (students.length > 0) {
+                    currentStudentId = students[0].id;
+                }
+                
+                // Update UI immediately
                 renderAll();
-                showToast(`✅ Import ${students.length} học sinh thành công`);
+                
+                // Update file info
                 document.getElementById('fileInfo').classList.add('show');
                 document.getElementById('fileName').textContent = file.name;
                 document.getElementById('fileSize').textContent = `(${(file.size/1024).toFixed(1)} KB)`;
                 document.getElementById('importArea').classList.add('has-data');
+                
+                showToast(`✅ Import ${students.length} học sinh thành công`);
+                
+                // Sync to Firebase
                 syncToFirebase();
             } catch (error) {
                 showToast(`❌ Lỗi: ${error.message}`, 'error');
@@ -1519,18 +1521,15 @@
         if (!student) return;
         if (!confirm(`Xóa học sinh "${student.name}"?`)) return;
         
-        // Xóa khỏi mảng local
         students = students.filter(s => s.id !== id);
         if (currentStudentId === id) {
             currentStudentId = students.length > 0 ? students[0].id : null;
         }
         
-        // Xóa trên Firebase
         db.ref(`classData/students/${id}`).remove()
             .then(() => {
                 renderAll();
                 showToast(`✅ Đã xóa học sinh "${student.name}"`);
-                // Cập nhật lại toàn bộ dữ liệu
                 syncToFirebase();
             })
             .catch((error) => {
@@ -1692,18 +1691,15 @@
         if (!isAdmin) { showToast('❌ Cần quyền Admin', 'error'); return; }
         if (!confirm('⚠️ Xóa TOÀN BỘ dữ liệu học sinh? Hành động này không thể hoàn tác!')) return;
         
-        // Xóa local
         students = [];
         currentStudentId = null;
         document.getElementById('fileInfo').classList.remove('show');
         document.getElementById('importArea').classList.remove('has-data');
         renderAll();
         
-        // Xóa trên Firebase
         db.ref('classData/students').remove()
             .then(() => {
                 showToast('🗑️ Đã xóa toàn bộ dữ liệu');
-                // Cập nhật sync status
                 updateSyncStatus('synced', '(trống)');
             })
             .catch((error) => {
@@ -2031,15 +2027,12 @@
         });
     }
 
-    // Hàm xóa dữ liệu mặc định trên Firebase khi khởi tạo
     function clearDefaultData() {
-        // Kiểm tra nếu có dữ liệu cũ "Sandy" thì xóa
         db.ref('classData/students').once('value')
             .then((snapshot) => {
                 const data = snapshot.val();
                 if (data) {
                     const studentsList = Object.values(data);
-                    // Kiểm tra nếu có học sinh tên "Sandy" hoặc "Bo" (dữ liệu mẫu)
                     const hasSampleData = studentsList.some(s => 
                         s.name === 'Sandy' || s.name === 'Bo' || s.name === 'Sandy2'
                     );
@@ -2065,7 +2058,6 @@
             <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFile(event)">
         `);
 
-        // Xóa dữ liệu mẫu nếu có
         clearDefaultData();
 
         if (sessionStorage.getItem('isAdmin') === 'true') {
