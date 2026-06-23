@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📊 Theo Dõi Học Tập - Pastel Purple</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
+    </script>
+    <style>
+        /* ===== RESET & BASE ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f4ff 0%, #f0e8ff 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* ===== HEADER ===== */
+        h1 {
+            text-align: center;
+            color: #6b46c1;
+            margin-bottom: 30px;
+            font-size: 2.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge-cloud {
+            font-size: 0.8rem;
+            background: linear-gradient(135deg, #9f7aea, #805ad5);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(128, 90, 213, 0.3);
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(128, 90, 213, 0.08);
+            margin-bottom: 24px;
+            border: 1px solid rgba(159, 122, 234, 0.1);
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 32px rgba(128, 90, 213, 0.15);
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #553c9a;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== FORM ===== */
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #553c9a;
+            margin-bottom: 4px;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e9d8fd;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: 0.3s;
+            background: rgba(255, 255, 255, 0.9);
+            color: #2d3748;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #9f7aea;
+            box-shadow: 0 0 0 4px rgba(159, 122, 234, 0.15);
+            background: white;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #9f7aea, #805ad5);
+            color: white;
+            box-shadow: 0 4px 12px rgba(128, 90, 213, 0.25);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(128, 90, 213, 0.35);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #a8e6cf, #7bc6a4);
+            color: #2d3748;
+            box-shadow: 0 4px 12px rgba(123, 198, 164, 0.25);
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(123, 198, 164, 0.35);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fbb6ce, #f687b3);
+            color: #2d3748;
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(246, 135, 179, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #fbd38d, #f6ad55);
+            color: #2d3748;
+        }
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(246, 173, 85, 0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #9f7aea;
+            color: #805ad5;
+        }
+        .btn-outline:hover {
+            background: #f8f4ff;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+        }
+
+        /* ===== STUDENT LIST ===== */
+        .student-list {
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .student-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .student-list::-webkit-scrollbar-track {
+            background: #f8f4ff;
+            border-radius: 10px;
+        }
+        .student-list::-webkit-scrollbar-thumb {
+            background: #d6bcf7;
+            border-radius: 10px;
+        }
+
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            transition: 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .student-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(128, 90, 213, 0.08);
+        }
+
+        .student-item.selected {
+            border-color: #9f7aea;
+            background: rgba(159, 122, 234, 0.08);
+            box-shadow: 0 4px 16px rgba(128, 90, 213, 0.12);
+        }
+
+        .student-item .name {
+            font-weight: 600;
+            color: #553c9a;
+        }
+
+        .student-item .avg {
+            font-size: 0.85rem;
+            color: #805ad5;
+        }
+
+        .student-item .actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* ===== SEARCH ===== */
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-left: 40px;
+        }
+
+        .search-box .icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #b794f4;
+        }
+
+        /* ===== CHART ===== */
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        /* ===== COMPARE TOGGLE ===== */
+        .compare-toggle {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .compare-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: 0.3s;
+            border: 2px solid transparent;
+            color: #553c9a;
+        }
+
+        .compare-toggle label:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: #d6bcf7;
+        }
+
+        .compare-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #9f7aea;
+            cursor: pointer;
+        }
+
+        .compare-toggle label:has(input:checked) {
+            background: rgba(159, 122, 234, 0.12);
+            border-color: #9f7aea;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(128, 90, 213, 0.2);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+            box-shadow: 0 20px 60px rgba(128, 90, 213, 0.2);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal h2 {
+            color: #553c9a;
+            margin-bottom: 16px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        /* ===== SCORE TAGS ===== */
+        .score-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #e9d8fd, #d6bcf7);
+            color: #553c9a;
+            padding: 3px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin: 2px 4px 2px 0;
+        }
+
+        /* ===== STATUS BAR ===== */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            border-radius: 14px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+            color: #553c9a;
+            border: 1px solid rgba(159, 122, 234, 0.1);
+        }
+
+        .status-bar .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .dot.online {
+            background: #a8e6cf;
+            box-shadow: 0 0 12px rgba(123, 198, 164, 0.4);
+        }
+        .dot.offline {
+            background: #fbb6ce;
+            box-shadow: 0 0 12px rgba(246, 135, 179, 0.4);
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            color: #b794f4;
+            padding: 40px 0;
+        }
+
+        .empty-state span {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            color: #9f7aea;
+            padding: 20px;
+        }
+
+        /* ===== TOAST ===== */
+        #toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            background: linear-gradient(135deg, #a8e6cf, #7bc6a4);
+            color: #2d3748;
+            padding: 14px 24px;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(123, 198, 164, 0.3);
+            display: none;
+            font-weight: 500;
+            transition: 0.3s;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        #toast.error {
+            background: linear-gradient(135deg, #fbb6ce, #f687b3);
+            box-shadow: 0 8px 32px rgba(246, 135, 179, 0.3);
+        }
+
+        /* ===== TAB ===== */
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 14px;
+            padding: 4px;
+            border: 1px solid rgba(159, 122, 234, 0.1);
+        }
+
+        .tab-bar button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 12px;
+            font-weight: 600;
+            color: #b794f4;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .tab-bar button.active {
+            background: white;
+            color: #553c9a;
+            box-shadow: 0 2px 12px rgba(128, 90, 213, 0.12);
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 600px) {
+            .form-row .form-group {
+                min-width: 100%;
+            }
+            .student-item {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .student-item .actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f8f4ff;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #d6bcf7, #b794f4);
+            border-radius: 10px;
+        }
+
+        /* ===== PREVIEW SCORES ===== */
+        #previewScores {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            min-height: 30px;
+            padding: 8px 0;
+        }
+
+        .score-preview-tag {
+            background: linear-gradient(135deg, #e9d8fd, #d6bcf7);
+            color: #553c9a;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .score-preview-avg {
+            font-size: 0.8rem;
+            color: #805ad5;
+            margin-left: 8px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>
+            📊 Theo Dõi Học Tập
+            <span class="badge-cloud">☁️ Cloud Sync</span>
+        </h1>
+
+        <!-- Toast notification -->
+        <div id="toast"></div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span>
+                <span class="dot online" id="statusDot"></span>
+                <span id="statusText">Đang kết nối...</span>
+            </span>
+            <span id="studentCount">0 học sinh</span>
+        </div>
+
+        <!-- ===== FORM THÊM HỌC SINH ===== -->
+        <div class="card">
+            <div class="card-title">🌸 Thêm học sinh & nhập điểm</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tên học sinh *</label>
+                    <input type="text" id="studentName" placeholder="VD: Nguyễn Văn A" />
+                </div>
+                <div class="form-group">
+                    <label>Tên bài kiểm tra</label>
+                    <input type="text" id="examName" placeholder="VD: Giữa kỳ 1" />
+                </div>
+                <div class="form-group" style="flex:0.5">
+                    <label>Điểm</label>
+                    <input type="number" id="scoreInput" placeholder="0-10" min="0" max="10" step="0.5" />
+                </div>
+                <div class="form-group" style="flex:0.3; min-width:auto;">
+                    <button class="btn btn-primary" onclick="addScore()" style="width:100%;">➕ Thêm</button>
+                </div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
+                <button class="btn btn-success" onclick="addStudent()">✅ Thêm học sinh</button>
+                <button class="btn btn-outline" onclick="clearForm()">🔄 Làm mới</button>
+            </div>
+            <div id="previewScores"></div>
+        </div>
+
+        <!-- ===== 2 CỘT: DANH SÁCH + BIỂU ĐỒ ===== -->
+        <div class="grid-2">
+            <!-- Cột trái: Danh sách + Tìm kiếm -->
+            <div class="card">
+                <div class="card-title">👨‍🎓 Danh sách học sinh</div>
+                <div class="search-box">
+                    <span class="icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm tên học sinh..." oninput="renderStudentList()" />
+                </div>
+                <div id="studentListContainer" class="student-list" style="margin-top:12px;">
+                    <div class="loading">⏳ Đang tải dữ liệu...</div>
+                </div>
+            </div>
+
+            <!-- Cột phải: Biểu đồ -->
+            <div class="card">
+                <div class="card-title">📈 Biểu đồ điểm</div>
+                <div id="chartTab">
+                    <div class="tab-bar">
+                        <button class="active" onclick="switchChartTab('individual')">🌸 Cá nhân</button>
+                        <button onclick="switchChartTab('compare')">🌈 So sánh</button>
+                    </div>
+                    <div id="tabIndividual" class="tab-content active">
+                        <div id="selectedStudentInfo" style="margin-bottom:12px; color:#805ad5;">
+                            👆 Chọn một học sinh trong danh sách để xem biểu đồ
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="individualChart"></canvas>
+                        </div>
+                    </div>
+                    <div id="tabCompare" class="tab-content">
+                        <div class="compare-toggle" id="compareToggle">
+                            <span style="color:#b794f4; font-size:0.9rem;">Chọn học sinh để so sánh:</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="compareChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL CHỈNH SỬA ===== -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <h2>✏️ Chỉnh sửa học sinh</h2>
+            <div class="form-group">
+                <label>Tên học sinh</label>
+                <input type="text" id="editName" />
+            </div>
+            <div class="form-group">
+                <label>Điểm (cách nhau bằng dấu phẩy)</label>
+                <input type="text" id="editScores" placeholder="VD: 8.5, 9, 7.5" />
+            </div>
+            <div class="form-group">
+                <label>Tên các bài kiểm tra (cách nhau bằng dấu phẩy)</label>
+                <input type="text" id="editExams" placeholder="VD: Giữa kỳ 1, Cuối kỳ, Kiểm tra 15'" />
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="closeEditModal()">Hủy</button>
+                <button class="btn btn-primary" onclick="saveEdit()">💾 Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 1. CẤU HÌNH FIREBASE (ĐÃ CẬP NHẬT)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGr5zM79FPI5X8cL0ePNSoHU8o8rhfvOI",
+            authDomain: "hethong-tuvung.firebaseapp.com",
+            databaseURL: "https://hethong-tuvung-default-rtdb.firebaseio.com",
+            projectId: "hethong-tuvung",
+            storageBucket: "hethong-tuvung.firebasestorage.app",
+            messagingSenderId: "526320623944",
+            appId: "1:526320623944:web:e937b1eb4ee2bdf820937d",
+            measurementId: "G-GBNZTZ047L"
+        };
+
+        // Khởi tạo Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ============================================================
+        // 2. BIẾN TOÀN CỤ
+        // ============================================================
+        let students = [];
+        let selectedStudentId = null;
+        let tempScores = [];
+        let tempExamNames = [];
+        let editStudentId = null;
+
+        let individualChartInstance = null;
+        let compareChartInstance = null;
+
+        // ============================================================
+        // 3. HÀM FIREBASE CRUD
+        // ============================================================
+
+        function listenStudents() {
+            db.collection('students')
+                .orderBy('name')
+                .onSnapshot((snapshot) => {
+                    students = [];
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        students.push({
+                            id: doc.id,
+                            name: data.name || 'Chưa có tên',
+                            scores: data.scores || [],
+                            examNames: data.examNames || []
+                        });
+                    });
+                    updateUI();
+                    updateStatus('online');
+                }, (error) => {
+                    console.error('Lỗi lắng nghe:', error);
+                    updateStatus('offline');
+                    showToast('Lỗi kết nối Firebase!', 'error');
+                });
+        }
+
+        async function addStudent() {
+            const nameInput = document.getElementById('studentName');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                showToast('⚠️ Vui lòng nhập tên học sinh!', 'error');
+                return;
+            }
+
+            if (tempScores.length === 0) {
+                showToast('⚠️ Vui lòng thêm ít nhất 1 điểm!', 'error');
+                return;
+            }
+
+            try {
+                await db.collection('students').add({
+                    name: name,
+                    scores: tempScores,
+                    examNames: tempExamNames,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showToast(`✅ Đã thêm học sinh: ${name}`);
+                clearForm();
+            } catch (error) {
+                console.error('Lỗi thêm:', error);
+                showToast('❌ Lỗi khi thêm học sinh!', 'error');
+            }
+        }
+
+        async function deleteStudent(id, name) {
+            if (!confirm(`Bạn có chắc muốn xóa học sinh "${name}"?`)) return;
+
+            try {
+                await db.collection('students').doc(id).delete();
+                showToast(`🗑️ Đã xóa: ${name}`);
+                if (selectedStudentId === id) {
+                    selectedStudentId = null;
+                }
+            } catch (error) {
+                console.error('Lỗi xóa:', error);
+                showToast('❌ Lỗi khi xóa!', 'error');
+            }
+        }
+
+        async function updateStudent(id, name, scores, examNames) {
+            try {
+                await db.collection('students').doc(id).update({
+                    name: name,
+                    scores: scores,
+                    examNames: examNames
+                });
+                showToast(`✅ Đã cập nhật: ${name}`);
+                closeEditModal();
+            } catch (error) {
+                console.error('Lỗi cập nhật:', error);
+                showToast('❌ Lỗi khi cập nhật!', 'error');
+            }
+        }
+
+        // ============================================================
+        // 4. HÀM XỬ LÝ UI
+        // ============================================================
+
+        function updateUI() {
+            renderStudentList();
+            updateStudentCount();
+            updateCompareCheckboxes();
+            if (selectedStudentId) {
+                const student = students.find(s => s.id === selectedStudentId);
+                if (student) {
+                    renderIndividualChart(student);
+                } else {
+                    selectedStudentId = null;
+                    renderIndividualChart(null);
+                }
+            }
+            const compareTab = document.getElementById('tabCompare');
+            if (compareTab.classList.contains('active')) {
+                updateCompareChart();
+            }
+        }
+
+        function updateStatus(status) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (status === 'online') {
+                dot.className = 'dot online';
+                text.textContent = 'Đã kết nối ☁️';
+            } else {
+                dot.className = 'dot offline';
+                text.textContent = 'Mất kết nối ⚠️';
+            }
+        }
+
+        function updateStudentCount() {
+            document.getElementById('studentCount').textContent = `${students.length} học sinh`;
+        }
+
+        function renderStudentList() {
+            const container = document.getElementById('studentListContainer');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+
+            let filtered = students;
+            if (searchTerm) {
+                filtered = students.filter(s => s.name.toLowerCase().includes(searchTerm));
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                            <div class="empty-state">
+                                <span>🌸</span>
+                                ${students.length === 0 ? 'Chưa có học sinh nào. Hãy thêm mới!' : 'Không tìm thấy học sinh nào!'}
+                            </div>
+                        `;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(student => {
+                const avg = student.scores.length > 0 ?
+                    (student.scores.reduce((a, b) => a + b, 0) / student.scores.length).toFixed(1) :
+                    'N/A';
+                const isSelected = student.id === selectedStudentId;
+
+                html += `
+                            <div class="student-item ${isSelected ? 'selected' : ''}" onclick="selectStudent('${student.id}')">
+                                <div>
+                                    <div class="name">${student.name}</div>
+                                    <div style="font-size:0.8rem; color:#805ad5;">
+                                        ${student.scores.length} bài · TB: ${avg}
+                                        ${student.scores.map(s => `<span class="score-tag">${s}</span>`).join('')}
+                                    </div>
+                                </div>
+                                <div class="actions">
+                                    <button class="btn btn-warning btn-sm" onclick="event.stopPropagation(); openEditModal('${student.id}')">✏️</button>
+                                    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteStudent('${student.id}','${student.name}')">🗑️</button>
+                                </div>
+                            </div>
+                        `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectStudent(id) {
+            selectedStudentId = id;
+            renderStudentList();
+            const student = students.find(s => s.id === id);
+            renderIndividualChart(student);
+            if (student) {
+                document.getElementById('selectedStudentInfo').innerHTML =
+                    `👤 <strong>${student.name}</strong> - ${student.scores.length} bài kiểm tra`;
+            }
+            switchChartTab('individual');
+        }
+
+        // ============================================================
+        // 5. THÊM ĐIỂM (TẠM)
+        // ============================================================
+
+        function addScore() {
+            const examInput = document.getElementById('examName');
+            const scoreInput = document.getElementById('scoreInput');
+
+            const exam = examInput.value.trim() || `Bài ${tempScores.length + 1}`;
+            const score = parseFloat(scoreInput.value);
+
+            if (isNaN(score) || score < 0 || score > 10) {
+                showToast('⚠️ Điểm phải từ 0 đến 10!', 'error');
+                return;
+            }
+
+            tempScores.push(score);
+            tempExamNames.push(exam);
+
+            renderPreviewScores();
+            examInput.value = '';
+            scoreInput.value = '';
+            scoreInput.focus();
+
+            showToast(`➕ Đã thêm điểm: ${score} (${exam})`);
+        }
+
+        function renderPreviewScores() {
+            const container = document.getElementById('previewScores');
+            if (tempScores.length === 0) {
+                container.innerHTML = '<span style="color:#b794f4; font-size:0.9rem;">Chưa có điểm nào</span>';
+                return;
+            }
+            let html = '';
+            tempScores.forEach((s, i) => {
+                const examName = tempExamNames[i] || `Bài ${i+1}`;
+                html += `<span class="score-preview-tag">${examName}: ${s}</span>`;
+            });
+            const avg = (tempScores.reduce((a, b) => a + b, 0) / tempScores.length).toFixed(1);
+            html += `<span class="score-preview-avg">| TB: ${avg}</span>`;
+            container.innerHTML = html;
+        }
+
+        function clearForm() {
+            document.getElementById('studentName').value = '';
+            document.getElementById('examName').value = '';
+            document.getElementById('scoreInput').value = '';
+            tempScores = [];
+            tempExamNames = [];
+            renderPreviewScores();
+        }
+
+        // ============================================================
+        // 6. BIỂU ĐỒ
+        // ============================================================
+
+        function renderIndividualChart(student) {
+            const ctx = document.getElementById('individualChart').getContext('2d');
+
+            if (individualChartInstance) {
+                individualChartInstance.destroy();
+            }
+
+            if (!student || student.scores.length === 0) {
+                individualChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Chưa có dữ liệu'],
+                        datasets: [{
+                            label: 'Điểm',
+                            data: [0],
+                            backgroundColor: ['#e9d8fd'],
+                            borderColor: ['#d6bcf7'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { display: true, text: '🌸 Chọn học sinh để xem biểu đồ', color: '#b794f4' }
+                        }
+                    }
+                });
+                return;
+            }
+
+            const labels = student.examNames.length === student.scores.length ?
+                student.examNames :
+                student.scores.map((_, i) => `Bài ${i+1}`);
+
+            const colors = student.scores.map(s => {
+                if (s >= 8) return '#a8e6cf';
+                if (s >= 5) return '#fbd38d';
+                return '#fbb6ce';
+            });
+
+            const borderColors = student.scores.map(s => {
+                if (s >= 8) return '#7bc6a4';
+                if (s >= 5) return '#f6ad55';
+                return '#f687b3';
+            });
+
+            individualChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: student.name,
+                        data: student.scores,
+                        backgroundColor: colors,
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        maxBarThickness: 60
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { 
+                                font: { weight: 'bold', size: 12 },
+                                color: '#553c9a'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: `📊 Biểu đồ điểm - ${student.name}`,
+                            font: { size: 14, weight: 'bold' },
+                            color: '#553c9a'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 10,
+                            ticks: { stepSize: 1, color: '#805ad5' },
+                            grid: { color: 'rgba(159, 122, 234, 0.08)' }
+                        },
+                        x: {
+                            ticks: { color: '#805ad5' },
+                            grid: { color: 'rgba(159, 122, 234, 0.08)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============================================================
+        // 7. SO SÁNH NHIỀU HỌC SINH
+        // ============================================================
+
+        function updateCompareCheckboxes() {
+            const container = document.getElementById('compareToggle');
+            const selectedIds = [];
+            container.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                selectedIds.push(cb.value);
+            });
+
+            let html = '<span style="color:#b794f4; font-size:0.9rem;">Chọn học sinh để so sánh:</span>';
+            students.forEach(s => {
+                const checked = selectedIds.includes(s.id) ? 'checked' : '';
+                html += `
+                            <label>
+                                <input type="checkbox" value="${s.id}" ${checked} onchange="updateCompareChart()" />
+                                ${s.name}
+                            </label>
+                        `;
+            });
+            container.innerHTML = html;
+        }
+
+        function updateCompareChart() {
+            const ctx = document.getElementById('compareChart').getContext('2d');
+            const container = document.getElementById('compareToggle');
+            const checked = container.querySelectorAll('input[type="checkbox"]:checked');
+
+            if (compareChartInstance) {
+                compareChartInstance.destroy();
+            }
+
+            if (checked.length === 0) {
+                compareChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Chọn học sinh để so sánh'],
+                        datasets: [{
+                            label: 'Vui lòng chọn ít nhất 2 học sinh',
+                            data: [0],
+                            backgroundColor: ['#e9d8fd']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: '🌈 Chọn học sinh để so sánh điểm',
+                                color: '#b794f4',
+                                font: { size: 13 }
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+
+            const selectedStudents = checked.map(cb => students.find(s => s.id === cb.value)).filter(Boolean);
+
+            let allExamNames = [];
+            if (selectedStudents.length > 0) {
+                const maxLen = Math.max(...selectedStudents.map(s => s.scores.length));
+                const firstStudent = selectedStudents[0];
+                allExamNames = firstStudent.examNames.length === firstStudent.scores.length ?
+                    firstStudent.examNames :
+                    firstStudent.scores.map((_, i) => `Bài ${i+1}`);
+                while (allExamNames.length < maxLen) {
+                    allExamNames.push(`Bài ${allExamNames.length + 1}`);
+                }
+            }
+
+            const pastelColors = [
+                '#9f7aea', '#a8e6cf', '#fbd38d', '#fbb6ce', 
+                '#b7d0f7', '#e9d8fd', '#f6ad55', '#7bc6a4'
+            ];
+
+            const datasets = selectedStudents.map((s, idx) => {
+                const color = pastelColors[idx % pastelColors.length];
+                const data = [...s.scores];
+                while (data.length < allExamNames.length) {
+                    data.push(null);
+                }
+                return {
+                    label: s.name,
+                    data: data,
+                    backgroundColor: color + '60',
+                    borderColor: color,
+                    borderWidth: 2,
+                    borderRadius: 6,
+                    maxBarThickness: 40
+                };
+            });
+
+            compareChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: allExamNames,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { 
+                                font: { weight: 'bold', size: 12 },
+                                color: '#553c9a'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: `🌈 So sánh điểm số (${selectedStudents.length} học sinh)`,
+                            font: { size: 14, weight: 'bold' },
+                            color: '#553c9a'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 10,
+                            ticks: { stepSize: 1, color: '#805ad5' },
+                            grid: { color: 'rgba(159, 122, 234, 0.08)' }
+                        },
+                        x: {
+                            ticks: { color: '#805ad5' },
+                            grid: { color: 'rgba(159, 122, 234, 0.08)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ============================================================
+        // 8. TAB SWITCH
+        // ============================================================
+
+        function switchChartTab(tab) {
+            document.querySelectorAll('.tab-bar button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+
+            if (tab === 'individual') {
+                document.querySelector('.tab-bar button:first-child').classList.add('active');
+                document.getElementById('tabIndividual').classList.add('active');
+                if (selectedStudentId) {
+                    const student = students.find(s => s.id === selectedStudentId);
+                    renderIndividualChart(student);
+                } else {
+                    renderIndividualChart(null);
+                }
+            } else {
+                document.querySelector('.tab-bar button:last-child').classList.add('active');
+                document.getElementById('tabCompare').classList.add('active');
+                updateCompareChart();
+            }
+        }
+
+        // ============================================================
+        // 9. MODAL CHỈNH SỬA
+        // ============================================================
+
+        function openEditModal(id) {
+            const student = students.find(s => s.id === id);
+            if (!student) return;
+
+            editStudentId = id;
+            document.getElementById('editName').value = student.name;
+            document.getElementById('editScores').value = student.scores.join(', ');
+            document.getElementById('editExams').value = student.examNames.join(', ');
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            editStudentId = null;
+        }
+
+        function saveEdit() {
+            const name = document.getElementById('editName').value.trim();
+            const scoresStr = document.getElementById('editScores').value.trim();
+            const examsStr = document.getElementById('editExams').value.trim();
+
+            if (!name) {
+                showToast('⚠️ Vui lòng nhập tên!', 'error');
+                return;
+            }
+
+            const scores = scoresStr.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n >= 0 && n <= 10);
+            if (scores.length === 0) {
+                showToast('⚠️ Vui lòng nhập điểm hợp lệ (0-10, cách nhau dấu phẩy)!', 'error');
+                return;
+            }
+
+            const examNames = examsStr ? examsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+            while (examNames.length < scores.length) {
+                examNames.push(`Bài ${examNames.length + 1}`);
+            }
+
+            updateStudent(editStudentId, name, scores, examNames);
+        }
+
+        // ============================================================
+        // 10. TOAST NOTIFICATION
+        // ============================================================
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = type === 'error' ? 'error' : '';
+            toast.style.display = 'block';
+
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        // ============================================================
+        // 11. KHỞI TẠO
+        // ============================================================
+
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+
+        document.getElementById('scoreInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addScore();
+        });
+
+        document.getElementById('studentName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addStudent();
+        });
+
+        listenStudents();
+        renderIndividualChart(null);
+
+        console.log('🌸 Ứng dụng đã sẵn sàng với màu tím pastel!');
+        console.log('📌 Dữ liệu được lưu trên Firebase Cloud');
+        console.log('💡 Bạn có thể truy cập từ mọi thiết bị!');
+    </script>
+
+</body>
+</html>
