@@ -48,6 +48,16 @@
             margin-top: 4px;
         }
 
+        .header .mode-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
         .header-right {
             display: flex;
             gap: 12px;
@@ -106,6 +116,87 @@
 
         .btn-outline:hover {
             background: rgba(255,255,255,0.1);
+        }
+
+        /* Login Overlay */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-overlay.show {
+            display: flex;
+        }
+
+        .login-box {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 24px 48px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .login-box .lock-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+
+        .login-box h2 {
+            color: #1a3a2e;
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+        }
+
+        .login-box p {
+            color: #6b8c7e;
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #d8eddd;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border 0.2s;
+            margin-bottom: 14px;
+            background: #f8fbf9;
+        }
+
+        .login-box input:focus {
+            border-color: #52b788;
+            outline: none;
+        }
+
+        .login-box .btn {
+            width: 100%;
+            justify-content: center;
+            padding: 14px;
+            font-size: 1rem;
+        }
+
+        .login-box .error-msg {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .login-box .error-msg.show {
+            display: block;
         }
 
         /* Import area */
@@ -554,9 +645,43 @@
             from { transform: translateY(100px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+
+        /* Admin-only elements */
+        .admin-only {
+            display: none;
+        }
+
+        .admin-only.visible {
+            display: inline-flex;
+        }
+
+        .panel.admin-only-panel {
+            display: none;
+        }
+
+        .panel.admin-only-panel.visible {
+            display: block;
+        }
     </style>
 </head>
 <body>
+
+<!-- ========== LOGIN OVERLAY ========== -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+        <div class="lock-icon">🔐</div>
+        <h2>Quyền Admin</h2>
+        <p>Vui lòng đăng nhập để quản lý dữ liệu học sinh</p>
+        <input type="email" id="loginEmail" placeholder="Email đăng nhập" value="ptquynhnhi05121999@gmail.com">
+        <input type="password" id="loginPassword" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter') loginAdmin()">
+        <button class="btn btn-success" onclick="loginAdmin()">🔑 Đăng nhập</button>
+        <div class="error-msg" id="loginError">❌ Email hoặc mật khẩu không đúng!</div>
+        <p style="margin-top:16px; font-size:0.85rem; color:#8aa99a;">
+            💡 Liên hệ cô Quỳnh Nhi để được cấp mật khẩu
+        </p>
+    </div>
+</div>
+
 <div class="container">
 
     <!-- HEADER -->
@@ -564,16 +689,18 @@
         <div>
             <h1>📚 Quản lý Học tập</h1>
             <div class="subtitle">Lớp Tiếng Anh cô Quỳnh Nhi</div>
+            <div class="mode-badge" id="modeBadge">👁️ Chế độ xem</div>
         </div>
         <div class="header-right">
-            <button class="btn btn-white" onclick="exportData()">📥 Xuất dữ liệu</button>
-            <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">📤 Import JSON</button>
+            <button class="btn btn-white admin-only" onclick="exportData()">📥 Xuất dữ liệu</button>
+            <button class="btn btn-outline admin-only" onclick="document.getElementById('fileInput').click()">📤 Import JSON</button>
             <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFile(event)">
+            <button class="btn btn-white" onclick="toggleAdminMode()" id="modeToggleBtn">🔑 Đăng nhập Admin</button>
         </div>
     </div>
 
-    <!-- IMPORT AREA -->
-    <div class="import-area" id="importArea">
+    <!-- IMPORT AREA (Admin only) -->
+    <div class="import-area admin-only-panel" id="importArea">
         <div class="drop-zone" id="dropZone">
             <span class="icon">📂</span>
             <p>Kéo thả file JSON vào đây hoặc nhấn để chọn</p>
@@ -647,11 +774,11 @@
                     </div>
                     <div class="info-item">
                         <div class="label">Số buổi nghỉ</div>
-                        <input type="number" id="detailAbsences" min="0" onchange="updateAbsences()" placeholder="0">
+                        <input type="number" id="detailAbsences" min="0" onchange="updateAbsences()" placeholder="0" disabled>
                     </div>
                     <div class="info-item" style="grid-column: 1 / -1;">
                         <div class="label">Nhận xét của giáo viên</div>
-                        <textarea id="detailNote" placeholder="Nhập nhận xét về học sinh này..." onchange="updateNote()"></textarea>
+                        <textarea id="detailNote" placeholder="Nhập nhận xét về học sinh này..." onchange="updateNote()" disabled></textarea>
                     </div>
                 </div>
 
@@ -703,10 +830,109 @@
 </div>
 
 <script>
-    // ============= DATA =============
+    // ============= CONFIG =============
+    const ADMIN_EMAIL = 'ptquynhnhi05121999@gmail.com';
+    const ADMIN_PASSWORD = 'nhinhi5129'; // Bạn có thể thay đổi mật khẩu này
+
+    // ============= STATE =============
     let students = [];
     let currentStudentId = null;
     let importedFileName = '';
+    let isAdmin = false;
+    let isAdminMode = false;
+
+    // ============= CHECK URL PARAM =============
+    function getUrlParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    // ============= ADMIN AUTH =============
+    function loginAdmin() {
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+        const errorEl = document.getElementById('loginError');
+
+        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+            isAdmin = true;
+            isAdminMode = true;
+            errorEl.classList.remove('show');
+            document.getElementById('loginOverlay').classList.remove('show');
+            enableAdminMode();
+            showToast('✅ Đăng nhập Admin thành công!');
+            // Lưu trạng thái vào sessionStorage để duy trì khi tải lại trang
+            sessionStorage.setItem('isAdmin', 'true');
+        } else {
+            errorEl.classList.add('show');
+            showToast('❌ Email hoặc mật khẩu không đúng!', 'error');
+        }
+    }
+
+    function logoutAdmin() {
+        isAdmin = false;
+        isAdminMode = false;
+        sessionStorage.removeItem('isAdmin');
+        disableAdminMode();
+        document.getElementById('modeBadge').textContent = '👁️ Chế độ xem';
+        document.getElementById('modeToggleBtn').textContent = '🔑 Đăng nhập Admin';
+        showToast('👋 Đã đăng xuất khỏi chế độ Admin');
+    }
+
+    function toggleAdminMode() {
+        if (isAdmin) {
+            logoutAdmin();
+        } else {
+            // Kiểm tra sessionStorage trước
+            if (sessionStorage.getItem('isAdmin') === 'true') {
+                isAdmin = true;
+                isAdminMode = true;
+                enableAdminMode();
+                document.getElementById('modeBadge').textContent = '🔐 Admin';
+                document.getElementById('modeToggleBtn').textContent = '🚪 Đăng xuất';
+                showToast('✅ Đã khôi phục phiên Admin');
+                return;
+            }
+            document.getElementById('loginOverlay').classList.add('show');
+            document.getElementById('loginEmail').value = ADMIN_EMAIL;
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginError').classList.remove('show');
+        }
+    }
+
+    function enableAdminMode() {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('visible'));
+        document.querySelectorAll('.admin-only-panel').forEach(el => el.classList.add('visible'));
+        document.getElementById('detailAbsences').disabled = false;
+        document.getElementById('detailNote').disabled = false;
+        document.getElementById('modeBadge').textContent = '🔐 Admin';
+        document.getElementById('modeToggleBtn').textContent = '🚪 Đăng xuất';
+        isAdminMode = true;
+    }
+
+    function disableAdminMode() {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('visible'));
+        document.querySelectorAll('.admin-only-panel').forEach(el => el.classList.remove('visible'));
+        document.getElementById('detailAbsences').disabled = true;
+        document.getElementById('detailNote').disabled = true;
+        isAdminMode = false;
+    }
+
+    // Check session on load
+    function checkAdminSession() {
+        if (sessionStorage.getItem('isAdmin') === 'true') {
+            isAdmin = true;
+            isAdminMode = true;
+            enableAdminMode();
+            showToast('✅ Đã khôi phục phiên Admin');
+        }
+        // Check URL mode
+        const mode = getUrlParam('mode');
+        if (mode === 'admin') {
+            if (!isAdmin) {
+                document.getElementById('loginOverlay').classList.add('show');
+            }
+        }
+    }
 
     // ============= UTILITY =============
     function showToast(message, type = 'success') {
@@ -736,6 +962,11 @@
     }
 
     function importFile(file) {
+        if (!isAdmin) {
+            showToast('❌ Vui lòng đăng nhập Admin để import dữ liệu', 'error');
+            return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
@@ -744,7 +975,6 @@
                     throw new Error('Dữ liệu phải là một mảng các học sinh');
                 }
                 
-                // Validate structure
                 data.forEach((student, idx) => {
                     if (!student.id || !student.name) {
                         throw new Error(`Học sinh #${idx + 1} thiếu 'id' hoặc 'name'`);
@@ -756,7 +986,6 @@
                 renderAll();
                 showToast(`✅ Đã import thành công ${students.length} học sinh từ "${file.name}"`);
                 
-                // Show file info
                 document.getElementById('fileInfo').classList.add('show');
                 document.getElementById('fileName').textContent = file.name;
                 document.getElementById('fileSize').textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
@@ -833,7 +1062,6 @@
             return;
         }
         
-        // Average
         let allScores = [];
         let allMonths = new Set();
         let totalAbsences = 0;
@@ -841,7 +1069,9 @@
         students.forEach(s => {
             if (s.scores) {
                 s.scores.forEach(sc => {
-                    allScores.push(sc.score);
+                    if (typeof sc.score === 'number') {
+                        allScores.push(sc.score);
+                    }
                     if (sc.month) allMonths.add(sc.month);
                 });
             }
@@ -890,8 +1120,10 @@
 
     function getStudentAvg(student) {
         if (!student.scores || student.scores.length === 0) return 0;
-        const total = student.scores.reduce((sum, sc) => sum + sc.score, 0);
-        return total / student.scores.length;
+        const numericScores = student.scores.filter(sc => typeof sc.score === 'number');
+        if (numericScores.length === 0) return 0;
+        const total = numericScores.reduce((sum, sc) => sum + sc.score, 0);
+        return total / numericScores.length;
     }
 
     function selectStudent(id) {
@@ -919,7 +1151,6 @@
         empty.style.display = 'none';
         document.getElementById('detailBadge').textContent = `#${student.id}`;
         
-        // Basic info
         document.getElementById('detailName').textContent = student.name;
         document.getElementById('detailId').textContent = `Mã số: ${student.id}`;
         
@@ -928,10 +1159,7 @@
         document.getElementById('detailAbsences').value = student.absences || 0;
         document.getElementById('detailNote').value = student.note || '';
         
-        // Score table
         renderScoreTable(student);
-        
-        // Comparison
         renderComparison(student);
     }
 
@@ -943,19 +1171,19 @@
             return;
         }
         
-        // Sort by month
         const sorted = [...student.scores].sort((a, b) => a.month - b.month);
         
         let html = '';
         sorted.forEach(sc => {
-            const isHigh = sc.score >= 8;
-            const isLow = sc.score < 5;
+            const isHigh = typeof sc.score === 'number' && sc.score >= 8;
+            const isLow = typeof sc.score === 'number' && sc.score < 5;
             const cls = isHigh ? 'score-high' : (isLow ? 'score-low' : '');
+            const displayScore = typeof sc.score === 'number' ? sc.score : sc.score;
             html += `
                 <tr>
                     <td>${getMonthName(sc.month)}</td>
                     <td>${sc.testName || 'Kiểm tra'}</td>
-                    <td class="${cls}">${sc.score}</td>
+                    <td class="${cls}">${displayScore}</td>
                 </tr>
             `;
         });
@@ -967,9 +1195,9 @@
         const compareMonth = document.getElementById('compareMonth');
         const compareClass = document.getElementById('compareClass');
         
-        // So sánh với tháng trước
-        if (student.scores && student.scores.length >= 2) {
-            const sorted = [...student.scores].sort((a, b) => a.month - b.month);
+        const numericScores = student.scores ? student.scores.filter(sc => typeof sc.score === 'number') : [];
+        if (numericScores.length >= 2) {
+            const sorted = [...numericScores].sort((a, b) => a.month - b.month);
             const last = sorted[sorted.length - 1];
             const prev = sorted[sorted.length - 2];
             const diff = last.score - prev.score;
@@ -985,7 +1213,6 @@
             compareMonth.textContent = '📊 Chưa đủ dữ liệu';
         }
         
-        // So sánh với trung bình lớp
         const studentAvg = getStudentAvg(student);
         const allAvg = students.length > 0 ? students.reduce((sum, s) => sum + getStudentAvg(s), 0) / students.length : 0;
         
@@ -1007,8 +1234,12 @@
         }
     }
 
-    // ============= UPDATE FUNCTIONS =============
+    // ============= UPDATE FUNCTIONS (Admin only) =============
     function updateAbsences() {
+        if (!isAdmin) {
+            showToast('❌ Vui lòng đăng nhập Admin để sửa', 'error');
+            return;
+        }
         const student = students.find(s => s.id === currentStudentId);
         if (!student) return;
         
@@ -1020,6 +1251,10 @@
     }
 
     function updateNote() {
+        if (!isAdmin) {
+            showToast('❌ Vui lòng đăng nhập Admin để sửa', 'error');
+            return;
+        }
         const student = students.find(s => s.id === currentStudentId);
         if (!student) return;
         
@@ -1029,6 +1264,10 @@
 
     // ============= CLEAR DATA =============
     function clearData() {
+        if (!isAdmin) {
+            showToast('❌ Vui lòng đăng nhập Admin để xóa dữ liệu', 'error');
+            return;
+        }
         if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đã import?')) return;
         
         students = [];
@@ -1041,6 +1280,10 @@
 
     // ============= EXPORT DATA =============
     function exportData() {
+        if (!isAdmin) {
+            showToast('❌ Vui lòng đăng nhập Admin để xuất dữ liệu', 'error');
+            return;
+        }
         if (students.length === 0) {
             showToast('❌ Không có dữ liệu để xuất', 'error');
             return;
@@ -1110,18 +1353,23 @@
     }
 
     // ============= INIT =============
-    renderAll();
-
-    // Load sample data if empty
-    if (students.length === 0) {
-        // Uncomment để tự động load mẫu khi mở trang
-        // loadSampleData();
-    }
-
     // Thêm nút load mẫu vào header
     document.querySelector('.header-right').insertAdjacentHTML('afterbegin', `
         <button class="btn btn-white" onclick="loadSampleData()" style="background:#d8eddd; color:#2d6a4f;">📋 Tải mẫu</button>
     `);
+
+    // Check admin session
+    checkAdminSession();
+    renderAll();
+
+    // Click outside login overlay to close
+    document.getElementById('loginOverlay').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+            if (!isAdmin) {
+                document.getElementById('loginOverlay').classList.remove('show');
+            }
+        }
+    });
 </script>
 </body>
 </html>
