@@ -987,7 +987,7 @@
                 <span class="file-name" id="fileName">data.json</span>
                 <span class="file-size" id="fileSize"></span>
                 <div class="file-actions">
-                    <button class="btn btn-danger" onclick="clearData()" style="padding:4px 14px; font-size:0.75rem;">🗑️ Xóa</button>
+                    <button class="btn btn-danger" onclick="clearAllData()" style="padding:4px 14px; font-size:0.75rem;">🗑️ Xóa tất cả</button>
                 </div>
             </div>
         </div>
@@ -1219,8 +1219,10 @@
 
         // Lưu từng học sinh riêng biệt để tránh ghi đè
         const updates = {};
-        students.forEach((student, index) => {
-            updates[`students/${student.id}`] = student;
+        students.forEach((student) => {
+            if (student.id) {
+                updates[`students/${student.id}`] = student;
+            }
         });
         // Thêm timestamp
         updates['updatedAt'] = firebase.database.ServerValue.TIMESTAMP;
@@ -1259,10 +1261,21 @@
                         updateSyncStatus('synced');
                         showToast(`✅ Đã tải ${students.length} học sinh từ Firebase`);
                     } else {
+                        // Không có dữ liệu, reset về trống
+                        students = [];
+                        currentStudentId = null;
+                        document.getElementById('fileInfo').classList.remove('show');
+                        document.getElementById('importArea').classList.remove('has-data');
+                        renderAll();
                         updateSyncStatus('synced', '(chưa có dữ liệu)');
-                        showToast('ℹ️ Chưa có dữ liệu trên Firebase', 'info');
                     }
                 } else {
+                    // Không có dữ liệu, reset về trống
+                    students = [];
+                    currentStudentId = null;
+                    document.getElementById('fileInfo').classList.remove('show');
+                    document.getElementById('importArea').classList.remove('has-data');
+                    renderAll();
                     updateSyncStatus('synced', '(chưa có dữ liệu)');
                 }
             })
@@ -1295,6 +1308,12 @@
                         }
                         renderAll();
                         updateSyncStatus('synced', '(tự động)');
+                    } else {
+                        // Dữ liệu trống
+                        students = [];
+                        currentStudentId = null;
+                        renderAll();
+                        updateSyncStatus('synced', '(trống)');
                     }
                 }
             });
@@ -1500,13 +1519,23 @@
         if (!student) return;
         if (!confirm(`Xóa học sinh "${student.name}"?`)) return;
         
+        // Xóa khỏi mảng local
         students = students.filter(s => s.id !== id);
         if (currentStudentId === id) {
             currentStudentId = students.length > 0 ? students[0].id : null;
         }
-        renderAll();
-        syncToFirebase();
-        showToast(`✅ Đã xóa học sinh "${student.name}"`);
+        
+        // Xóa trên Firebase
+        db.ref(`classData/students/${id}`).remove()
+            .then(() => {
+                renderAll();
+                showToast(`✅ Đã xóa học sinh "${student.name}"`);
+                // Cập nhật lại toàn bộ dữ liệu
+                syncToFirebase();
+            })
+            .catch((error) => {
+                showToast('❌ Lỗi xóa trên Firebase: ' + error.message, 'error');
+            });
     }
 
     function renderStudentList() {
@@ -1659,18 +1688,23 @@
         showToast(`✅ Đã lưu nhận xét`);
     }
 
-    function clearData() {
+    function clearAllData() {
         if (!isAdmin) { showToast('❌ Cần quyền Admin', 'error'); return; }
-        if (!confirm('Xóa toàn bộ dữ liệu?')) return;
+        if (!confirm('⚠️ Xóa TOÀN BỘ dữ liệu học sinh? Hành động này không thể hoàn tác!')) return;
+        
+        // Xóa local
         students = [];
         currentStudentId = null;
         document.getElementById('fileInfo').classList.remove('show');
         document.getElementById('importArea').classList.remove('has-data');
         renderAll();
+        
         // Xóa trên Firebase
         db.ref('classData/students').remove()
             .then(() => {
-                showToast('🗑️ Đã xóa dữ liệu');
+                showToast('🗑️ Đã xóa toàn bộ dữ liệu');
+                // Cập nhật sync status
+                updateSyncStatus('synced', '(trống)');
             })
             .catch((error) => {
                 showToast('❌ Lỗi xóa Firebase: ' + error.message, 'error');
@@ -1767,6 +1801,7 @@
             absBadge.style.display = 'none';
             noteBox.style.display = 'none';
             if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+            if (comparisonChartInstance) { comparisonChartInstance.destroy(); comparisonChartInstance = null; }
             return;
         }
 
@@ -1996,6 +2031,32 @@
         });
     }
 
+    // Hàm xóa dữ liệu mặc định trên Firebase khi khởi tạo
+    function clearDefaultData() {
+        // Kiểm tra nếu có dữ liệu cũ "Sandy" thì xóa
+        db.ref('classData/students').once('value')
+            .then((snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const studentsList = Object.values(data);
+                    // Kiểm tra nếu có học sinh tên "Sandy" hoặc "Bo" (dữ liệu mẫu)
+                    const hasSampleData = studentsList.some(s => 
+                        s.name === 'Sandy' || s.name === 'Bo' || s.name === 'Sandy2'
+                    );
+                    if (hasSampleData) {
+                        db.ref('classData/students').remove()
+                            .then(() => {
+                                console.log('Đã xóa dữ liệu mẫu');
+                                students = [];
+                                currentStudentId = null;
+                                renderAll();
+                                updateSyncStatus('synced', '(trống)');
+                            });
+                    }
+                }
+            });
+    }
+
     function init() {
         document.querySelector('.header-right').insertAdjacentHTML('afterbegin', `
             <button class="btn btn-white" onclick="exportData()" style="background:#d8eddd; color:#2d6a4f;">📥 Xuất JSON</button>
@@ -2003,6 +2064,9 @@
             <button class="btn btn-white admin-only" onclick="syncToFirebase()" style="background:#d8eddd; color:#2d6a4f;">☁️ Sync</button>
             <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFile(event)">
         `);
+
+        // Xóa dữ liệu mẫu nếu có
+        clearDefaultData();
 
         if (sessionStorage.getItem('isAdmin') === 'true') {
             isAdmin = true;
