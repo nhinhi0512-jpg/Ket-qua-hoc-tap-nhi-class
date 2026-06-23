@@ -1,225 +1,288 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>📊 Theo Dõi Học Tập - Pastel Purple</title>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
-    </script>
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js">
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý Học tập - Lớp Tiếng Anh cô Quỳnh Nhi</title>
     <style>
-        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #f8f4ff 0%, #f0e8ff 100%);
-            padding: 20px;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f0f7f5;
             min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
-            max-width: 1300px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
-        /* ===== HEADER ===== */
-        h1 {
-            text-align: center;
-            color: #6b46c1;
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #2d6a4f, #40916c);
+            padding: 30px 40px;
+            border-radius: 20px;
+            color: white;
             margin-bottom: 30px;
-            font-size: 2.2rem;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 1rem;
+            margin-top: 4px;
+        }
+
+        .header-right {
+            display: flex;
             gap: 12px;
+            align-items: center;
             flex-wrap: wrap;
         }
 
-        .badge-cloud {
-            font-size: 0.8rem;
-            background: linear-gradient(135deg, #9f7aea, #805ad5);
-            color: white;
-            padding: 4px 16px;
-            border-radius: 20px;
-            box-shadow: 0 2px 8px rgba(128, 90, 213, 0.3);
-        }
-
-        /* ===== CARDS ===== */
-        .card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 8px 32px rgba(128, 90, 213, 0.08);
-            margin-bottom: 24px;
-            border: 1px solid rgba(159, 122, 234, 0.1);
-            transition: 0.3s;
-        }
-
-        .card:hover {
-            box-shadow: 0 8px 32px rgba(128, 90, 213, 0.15);
-        }
-
-        .card-title {
-            font-size: 1.2rem;
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 12px;
             font-weight: 600;
-            color: #553c9a;
-            margin-bottom: 16px;
-            display: flex;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
             align-items: center;
             gap: 8px;
         }
 
-        .grid-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        @media (max-width: 768px) {
-            .grid-2 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* ===== FORM ===== */
-        .form-group {
-            margin-bottom: 14px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            color: #553c9a;
-            margin-bottom: 4px;
-            font-size: 0.9rem;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px 14px;
-            border: 2px solid #e9d8fd;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            transition: 0.3s;
-            background: rgba(255, 255, 255, 0.9);
-            color: #2d3748;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #9f7aea;
-            box-shadow: 0 0 0 4px rgba(159, 122, 234, 0.15);
+        .btn-white {
             background: white;
+            color: #2d6a4f;
         }
 
-        .form-row {
-            display: flex;
-            gap: 12px;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .form-row .form-group {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        /* ===== BUTTONS ===== */
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #9f7aea, #805ad5);
-            color: white;
-            box-shadow: 0 4px 12px rgba(128, 90, 213, 0.25);
-        }
-        .btn-primary:hover {
+        .btn-white:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(128, 90, 213, 0.35);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, #a8e6cf, #7bc6a4);
-            color: #2d3748;
-            box-shadow: 0 4px 12px rgba(123, 198, 164, 0.25);
-        }
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(123, 198, 164, 0.35);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #fbb6ce, #f687b3);
-            color: #2d3748;
-        }
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(246, 135, 179, 0.3);
+            background: #e74c3c;
+            color: white;
         }
 
-        .btn-warning {
-            background: linear-gradient(135deg, #fbd38d, #f6ad55);
-            color: #2d3748;
-        }
-        .btn-warning:hover {
+        .btn-danger:hover {
+            background: #c0392b;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(246, 173, 85, 0.3);
+        }
+
+        .btn-success {
+            background: #52b788;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #40916c;
+            transform: translateY(-2px);
         }
 
         .btn-outline {
             background: transparent;
-            border: 2px solid #9f7aea;
-            color: #805ad5;
-        }
-        .btn-outline:hover {
-            background: #f8f4ff;
-            transform: translateY(-2px);
+            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
         }
 
-        .btn-sm {
-            padding: 6px 14px;
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Import area */
+        .import-area {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 2px dashed #b7e4c7;
+            transition: all 0.3s;
+        }
+
+        .import-area.has-data {
+            border-color: #52b788;
+            background: #f8fbf9;
+        }
+
+        .drop-zone {
+            border: 2px dashed #95d5b2;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: #f8fbf9;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .drop-zone:hover {
+            background: #e8f5ee;
+            border-color: #52b788;
+        }
+
+        .drop-zone.dragover {
+            background: #d8eddd;
+            border-color: #2d6a4f;
+        }
+
+        .drop-zone .icon {
+            font-size: 3rem;
+            color: #52b788;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .drop-zone p {
+            color: #4a6b5e;
+            font-weight: 500;
+        }
+
+        .drop-zone .hint {
+            color: #8aa99a;
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        /* File info */
+        .file-info {
+            display: none;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 20px;
+            background: #e8f5ee;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .file-info.show {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .file-info .file-name {
+            font-weight: 600;
+            color: #2d6a4f;
+        }
+
+        .file-info .file-size {
+            color: #4a6b5e;
             font-size: 0.85rem;
         }
 
-        /* ===== STUDENT LIST ===== */
+        .file-info .file-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 14px;
+            padding: 18px 22px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid #52b788;
+        }
+
+        .stat-card .label {
+            font-size: 0.8rem;
+            color: #6b8c7e;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #2d6a4f;
+            margin-top: 2px;
+        }
+
+        /* Main layout */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.8fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2d6a4f;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .panel-title .badge {
+            background: #d8eddd;
+            color: #2d6a4f;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        /* Student list */
         .student-list {
-            max-height: 450px;
+            max-height: 500px;
             overflow-y: auto;
         }
 
         .student-list::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
+
         .student-list::-webkit-scrollbar-track {
-            background: #f8f4ff;
-            border-radius: 10px;
+            background: #f0f7f5;
         }
+
         .student-list::-webkit-scrollbar-thumb {
-            background: #d6bcf7;
-            border-radius: 10px;
+            background: #b7e4c7;
+            border-radius: 4px;
         }
 
         .student-item {
@@ -227,1077 +290,838 @@
             justify-content: space-between;
             align-items: center;
             padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(5px);
-            border-radius: 12px;
-            margin-bottom: 8px;
-            transition: 0.3s;
+            border-radius: 10px;
             cursor: pointer;
-            border: 2px solid transparent;
+            transition: all 0.2s;
+            border-bottom: 1px solid #eef6f2;
         }
 
         .student-item:hover {
-            background: rgba(255, 255, 255, 0.95);
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(128, 90, 213, 0.08);
+            background: #f0faf5;
         }
 
-        .student-item.selected {
-            border-color: #9f7aea;
-            background: rgba(159, 122, 234, 0.08);
-            box-shadow: 0 4px 16px rgba(128, 90, 213, 0.12);
+        .student-item.active {
+            background: #d8eddd;
+            border-left: 3px solid #2d6a4f;
         }
 
         .student-item .name {
             font-weight: 600;
-            color: #553c9a;
+            color: #1a3a2e;
         }
 
         .student-item .avg {
             font-size: 0.85rem;
-            color: #805ad5;
+            color: #52b788;
+            font-weight: 600;
         }
 
-        .student-item .actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        /* ===== SEARCH ===== */
-        .search-box {
-            position: relative;
-        }
-
-        .search-box input {
-            padding-left: 40px;
-        }
-
-        .search-box .icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #b794f4;
-        }
-
-        /* ===== CHART ===== */
-        .chart-container {
-            position: relative;
-            height: 280px;
-        }
-
-        /* ===== COMPARE TOGGLE ===== */
-        .compare-toggle {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-
-        .compare-toggle label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.7);
-            padding: 6px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: 0.3s;
-            border: 2px solid transparent;
-            color: #553c9a;
-        }
-
-        .compare-toggle label:hover {
-            background: rgba(255, 255, 255, 0.95);
-            border-color: #d6bcf7;
-        }
-
-        .compare-toggle input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #9f7aea;
-            cursor: pointer;
-        }
-
-        .compare-toggle label:has(input:checked) {
-            background: rgba(159, 122, 234, 0.12);
-            border-color: #9f7aea;
-        }
-
-        /* ===== MODAL ===== */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(128, 90, 213, 0.2);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal {
-            background: white;
-            border-radius: 24px;
-            padding: 32px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: slideUp 0.3s ease;
-            box-shadow: 0 20px 60px rgba(128, 90, 213, 0.2);
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        .modal h2 {
-            color: #553c9a;
-            margin-bottom: 16px;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-            justify-content: flex-end;
-        }
-
-        /* ===== SCORE TAGS ===== */
-        .score-tag {
-            display: inline-block;
-            background: linear-gradient(135deg, #e9d8fd, #d6bcf7);
-            color: #553c9a;
-            padding: 3px 12px;
-            border-radius: 16px;
+        .student-item .absences {
             font-size: 0.8rem;
-            font-weight: 500;
-            margin: 2px 4px 2px 0;
+            color: #e67e22;
+            background: #fef9e7;
+            padding: 2px 10px;
+            border-radius: 12px;
         }
 
-        /* ===== STATUS BAR ===== */
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(5px);
-            border-radius: 14px;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
-            color: #553c9a;
-            border: 1px solid rgba(159, 122, 234, 0.1);
-        }
-
-        .status-bar .dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .dot.online {
-            background: #a8e6cf;
-            box-shadow: 0 0 12px rgba(123, 198, 164, 0.4);
-        }
-        .dot.offline {
-            background: #fbb6ce;
-            box-shadow: 0 0 12px rgba(246, 135, 179, 0.4);
-        }
-
-        /* ===== EMPTY STATE ===== */
         .empty-state {
             text-align: center;
-            color: #b794f4;
-            padding: 40px 0;
+            padding: 40px 20px;
+            color: #6b8c7e;
         }
 
-        .empty-state span {
+        .empty-state .icon {
             font-size: 3rem;
             display: block;
             margin-bottom: 12px;
+            opacity: 0.5;
         }
 
-        .loading {
-            text-align: center;
-            color: #9f7aea;
-            padding: 20px;
-        }
-
-        /* ===== TOAST ===== */
-        #toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            background: linear-gradient(135deg, #a8e6cf, #7bc6a4);
-            color: #2d3748;
-            padding: 14px 24px;
-            border-radius: 14px;
-            box-shadow: 0 8px 32px rgba(123, 198, 164, 0.3);
-            display: none;
-            font-weight: 500;
-            transition: 0.3s;
-            max-width: 400px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-
-        #toast.error {
-            background: linear-gradient(135deg, #fbb6ce, #f687b3);
-            box-shadow: 0 8px 32px rgba(246, 135, 179, 0.3);
-        }
-
-        /* ===== TAB ===== */
-        .tab-bar {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 16px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 14px;
-            padding: 4px;
-            border: 1px solid rgba(159, 122, 234, 0.1);
-        }
-
-        .tab-bar button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            background: transparent;
-            border-radius: 12px;
-            font-weight: 600;
-            color: #b794f4;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .tab-bar button.active {
-            background: white;
-            color: #553c9a;
-            box-shadow: 0 2px 12px rgba(128, 90, 213, 0.12);
-        }
-
-        .tab-content {
+        /* Detail section */
+        .detail-section {
             display: none;
         }
-        .tab-content.active {
+
+        .detail-section.visible {
             display: block;
         }
 
-        /* ===== RESPONSIVE ===== */
-        @media (max-width: 600px) {
-            .form-row .form-group {
-                min-width: 100%;
-            }
-            .student-item {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            .student-item .actions {
-                width: 100%;
-                justify-content: flex-end;
-            }
-            h1 {
-                font-size: 1.6rem;
-            }
-        }
-
-        /* ===== SCROLLBAR ===== */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f8f4ff;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #d6bcf7, #b794f4);
-            border-radius: 10px;
-        }
-
-        /* ===== PREVIEW SCORES ===== */
-        #previewScores {
+        .detail-header {
             display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             flex-wrap: wrap;
-            gap: 4px;
-            min-height: 30px;
-            padding: 8px 0;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e8f5ee;
         }
 
-        .score-preview-tag {
-            background: linear-gradient(135deg, #e9d8fd, #d6bcf7);
-            color: #553c9a;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 0.8rem;
+        .detail-header .student-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a3a2e;
+        }
+
+        .detail-header .student-id {
+            color: #6b8c7e;
+            font-size: 0.85rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-item {
+            background: #f8fbf9;
+            border-radius: 10px;
+            padding: 12px 16px;
+        }
+
+        .info-item .label {
+            font-size: 0.75rem;
+            color: #6b8c7e;
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
-        .score-preview-avg {
-            font-size: 0.8rem;
-            color: #805ad5;
-            margin-left: 8px;
+        .info-item .value {
+            font-size: 1rem;
             font-weight: 600;
+            color: #1a3a2e;
+            margin-top: 2px;
+        }
+
+        .info-item input,
+        .info-item textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #d8eddd;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border 0.2s;
+            background: white;
+            margin-top: 4px;
+        }
+
+        .info-item input:focus,
+        .info-item textarea:focus {
+            border-color: #52b788;
+            outline: none;
+        }
+
+        .info-item textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        /* Score tables */
+        .score-table-wrap {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+
+        .score-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .score-table th {
+            background: #d8eddd;
+            color: #1a3a2e;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .score-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #eef6f2;
+        }
+
+        .score-table .month-header {
+            background: #f0faf5;
+            font-weight: 600;
+            color: #2d6a4f;
+        }
+
+        .score-high {
+            color: #2d6a4f;
+            font-weight: 700;
+        }
+
+        .score-low {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        /* Comparison */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .comparison-item {
+            background: #f8fbf9;
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+
+        .comparison-item .label {
+            font-size: 0.75rem;
+            color: #6b8c7e;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .comparison-item .value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a3a2e;
+            margin-top: 4px;
+        }
+
+        .comparison-item .trend-up {
+            color: #2d6a4f;
+        }
+
+        .comparison-item .trend-down {
+            color: #e74c3c;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 20px;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .panel {
+                padding: 16px;
+            }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideUp 0.4s ease;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .toast.success {
+            background: #2d6a4f;
+        }
+
+        .toast.error {
+            background: #e74c3c;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
 <body>
+<div class="container">
 
-    <div class="container">
-        <h1>
-            📊 Theo Dõi Học Tập
-            <span class="badge-cloud">☁️ Cloud Sync</span>
-        </h1>
-
-        <!-- Toast notification -->
-        <div id="toast"></div>
-
-        <!-- Status Bar -->
-        <div class="status-bar">
-            <span>
-                <span class="dot online" id="statusDot"></span>
-                <span id="statusText">Đang kết nối...</span>
-            </span>
-            <span id="studentCount">0 học sinh</span>
+    <!-- HEADER -->
+    <div class="header">
+        <div>
+            <h1>📚 Quản lý Học tập</h1>
+            <div class="subtitle">Lớp Tiếng Anh cô Quỳnh Nhi</div>
         </div>
-
-        <!-- ===== FORM THÊM HỌC SINH ===== -->
-        <div class="card">
-            <div class="card-title">🌸 Thêm học sinh & nhập điểm</div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Tên học sinh *</label>
-                    <input type="text" id="studentName" placeholder="VD: Nguyễn Văn A" />
-                </div>
-                <div class="form-group">
-                    <label>Tên bài kiểm tra</label>
-                    <input type="text" id="examName" placeholder="VD: Giữa kỳ 1" />
-                </div>
-                <div class="form-group" style="flex:0.5">
-                    <label>Điểm</label>
-                    <input type="number" id="scoreInput" placeholder="0-10" min="0" max="10" step="0.5" />
-                </div>
-                <div class="form-group" style="flex:0.3; min-width:auto;">
-                    <button class="btn btn-primary" onclick="addScore()" style="width:100%;">➕ Thêm</button>
-                </div>
-            </div>
-            <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
-                <button class="btn btn-success" onclick="addStudent()">✅ Thêm học sinh</button>
-                <button class="btn btn-outline" onclick="clearForm()">🔄 Làm mới</button>
-            </div>
-            <div id="previewScores"></div>
+        <div class="header-right">
+            <button class="btn btn-white" onclick="exportData()">📥 Xuất dữ liệu</button>
+            <button class="btn btn-outline" onclick="document.getElementById('fileInput').click()">📤 Import JSON</button>
+            <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFile(event)">
         </div>
+    </div>
 
-        <!-- ===== 2 CỘT: DANH SÁCH + BIỂU ĐỒ ===== -->
-        <div class="grid-2">
-            <!-- Cột trái: Danh sách + Tìm kiếm -->
-            <div class="card">
-                <div class="card-title">👨‍🎓 Danh sách học sinh</div>
-                <div class="search-box">
-                    <span class="icon">🔍</span>
-                    <input type="text" id="searchInput" placeholder="Tìm kiếm tên học sinh..." oninput="renderStudentList()" />
-                </div>
-                <div id="studentListContainer" class="student-list" style="margin-top:12px;">
-                    <div class="loading">⏳ Đang tải dữ liệu...</div>
-                </div>
-            </div>
-
-            <!-- Cột phải: Biểu đồ -->
-            <div class="card">
-                <div class="card-title">📈 Biểu đồ điểm</div>
-                <div id="chartTab">
-                    <div class="tab-bar">
-                        <button class="active" onclick="switchChartTab('individual')">🌸 Cá nhân</button>
-                        <button onclick="switchChartTab('compare')">🌈 So sánh</button>
-                    </div>
-                    <div id="tabIndividual" class="tab-content active">
-                        <div id="selectedStudentInfo" style="margin-bottom:12px; color:#805ad5;">
-                            👆 Chọn một học sinh trong danh sách để xem biểu đồ
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="individualChart"></canvas>
-                        </div>
-                    </div>
-                    <div id="tabCompare" class="tab-content">
-                        <div class="compare-toggle" id="compareToggle">
-                            <span style="color:#b794f4; font-size:0.9rem;">Chọn học sinh để so sánh:</span>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="compareChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+    <!-- IMPORT AREA -->
+    <div class="import-area" id="importArea">
+        <div class="drop-zone" id="dropZone">
+            <span class="icon">📂</span>
+            <p>Kéo thả file JSON vào đây hoặc nhấn để chọn</p>
+            <div class="hint">Hỗ trợ file .json với cấu trúc: danh sách học sinh, điểm theo tháng</div>
+        </div>
+        <div class="file-info" id="fileInfo">
+            <span class="file-name" id="fileName">data.json</span>
+            <span class="file-size" id="fileSize">(1.2 MB)</span>
+            <div class="file-actions">
+                <button class="btn btn-danger" onclick="clearData()" style="padding:6px 16px; font-size:0.8rem;">🗑️ Xóa dữ liệu</button>
             </div>
         </div>
     </div>
 
-    <!-- ===== MODAL CHỈNH SỬA ===== -->
-    <div class="modal-overlay" id="editModal">
-        <div class="modal">
-            <h2>✏️ Chỉnh sửa học sinh</h2>
-            <div class="form-group">
-                <label>Tên học sinh</label>
-                <input type="text" id="editName" />
+    <!-- STATS -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+            <div class="label">Tổng số học sinh</div>
+            <div class="value" id="totalStudents">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Điểm trung bình chung</div>
+            <div class="value" id="avgAll">0.0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Số tháng đã học</div>
+            <div class="value" id="totalMonths">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Tổng số buổi nghỉ</div>
+            <div class="value" id="totalAbsences">0</div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-grid">
+        <!-- Left: Student List -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>👨‍🎓 Danh sách học sinh</span>
+                <span class="badge" id="studentCount">0</span>
             </div>
-            <div class="form-group">
-                <label>Điểm (cách nhau bằng dấu phẩy)</label>
-                <input type="text" id="editScores" placeholder="VD: 8.5, 9, 7.5" />
+            <div class="student-list" id="studentList">
+                <div class="empty-state">
+                    <span class="icon">📂</span>
+                    <p>Chưa có dữ liệu học sinh</p>
+                    <p style="font-size:0.85rem; margin-top:4px;">Hãy import file JSON để bắt đầu</p>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Tên các bài kiểm tra (cách nhau bằng dấu phẩy)</label>
-                <input type="text" id="editExams" placeholder="VD: Giữa kỳ 1, Cuối kỳ, Kiểm tra 15'" />
+        </div>
+
+        <!-- Right: Student Detail -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>📊 Chi tiết học sinh</span>
+                <span class="badge" id="detailBadge">Chọn học sinh</span>
             </div>
-            <div class="modal-actions">
-                <button class="btn btn-outline" onclick="closeEditModal()">Hủy</button>
-                <button class="btn btn-primary" onclick="saveEdit()">💾 Lưu thay đổi</button>
+
+            <div class="detail-section" id="detailSection">
+                <div class="detail-header">
+                    <div>
+                        <div class="student-name" id="detailName">-</div>
+                        <div class="student-id" id="detailId">-</div>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="label">Điểm trung bình</div>
+                        <div class="value" id="detailAvg">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">Số buổi nghỉ</div>
+                        <input type="number" id="detailAbsences" min="0" onchange="updateAbsences()" placeholder="0">
+                    </div>
+                    <div class="info-item" style="grid-column: 1 / -1;">
+                        <div class="label">Nhận xét của giáo viên</div>
+                        <textarea id="detailNote" placeholder="Nhập nhận xét về học sinh này..." onchange="updateNote()"></textarea>
+                    </div>
+                </div>
+
+                <!-- Score Table -->
+                <div style="margin-top: 10px;">
+                    <div style="font-weight:600; color:#2d6a4f; margin-bottom:8px;">📝 Bảng điểm theo tháng</div>
+                    <div class="score-table-wrap">
+                        <table class="score-table" id="scoreTable">
+                            <thead>
+                                <tr>
+                                    <th>Tháng</th>
+                                    <th>Bài kiểm tra</th>
+                                    <th>Điểm</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoreBody">
+                                <tr><td colspan="3" style="text-align:center; color:#6b8c7e;">Chưa có dữ liệu</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Comparison -->
+                <div style="margin-top: 20px;">
+                    <div style="font-weight:600; color:#2d6a4f; margin-bottom:8px;">📊 So sánh</div>
+                    <div class="comparison-grid" id="comparisonGrid">
+                        <div class="comparison-item">
+                            <div class="label">📈 So với tháng trước</div>
+                            <div class="value" id="compareMonth">-</div>
+                        </div>
+                        <div class="comparison-item">
+                            <div class="label">📊 So với trung bình lớp</div>
+                            <div class="value" id="compareClass">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="empty-state" id="detailEmpty">
+                <span class="icon">👆</span>
+                <p>Chọn một học sinh để xem chi tiết</p>
             </div>
         </div>
     </div>
 
-    <script>
-        // ============================================================
-        // 1. CẤU HÌNH FIREBASE - REALTIME DATABASE
-        // ============================================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyAGr5zM79FPI5X8cL0ePNSoHU8o8rhfvOI",
-            authDomain: "hethong-tuvung.firebaseapp.com",
-            databaseURL: "https://hethong-tuvung-default-rtdb.firebaseio.com",
-            projectId: "hethong-tuvung",
-            storageBucket: "hethong-tuvung.firebasestorage.app",
-            messagingSenderId: "526320623944",
-            appId: "1:526320623944:web:e937b1eb4ee2bdf820937d",
-            measurementId: "G-GBNZTZ047L"
+    <footer style="text-align:center; color:#6b8c7e; font-size:0.85rem; padding:20px 0; border-top:1px solid #d8eddd;">
+        Hệ thống quản lý học tập | Lớp Tiếng Anh cô Quỳnh Nhi
+    </footer>
+</div>
+
+<script>
+    // ============= DATA =============
+    let students = [];
+    let currentStudentId = null;
+    let importedFileName = '';
+
+    // ============= UTILITY =============
+    function showToast(message, type = 'success') {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    function getMonthName(month) {
+        const names = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+                       'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+        return names[month - 1] || `Tháng ${month}`;
+    }
+
+    // ============= FILE HANDLING =============
+    function handleFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        importFile(file);
+        event.target.value = '';
+    }
+
+    function importFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!Array.isArray(data)) {
+                    throw new Error('Dữ liệu phải là một mảng các học sinh');
+                }
+                
+                // Validate structure
+                data.forEach((student, idx) => {
+                    if (!student.id || !student.name) {
+                        throw new Error(`Học sinh #${idx + 1} thiếu 'id' hoặc 'name'`);
+                    }
+                });
+                
+                students = data;
+                importedFileName = file.name;
+                renderAll();
+                showToast(`✅ Đã import thành công ${students.length} học sinh từ "${file.name}"`);
+                
+                // Show file info
+                document.getElementById('fileInfo').classList.add('show');
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+                document.getElementById('importArea').classList.add('has-data');
+                
+            } catch (error) {
+                showToast(`❌ Lỗi: ${error.message}`, 'error');
+            }
         };
+        reader.readAsText(file);
+    }
 
-        // Khởi tạo Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        // Tham chiếu đến node "students" trong Realtime Database
-        const studentsRef = database.ref('students');
-
-        // ============================================================
-        // 2. BIẾN TOÀN CỤ
-        // ============================================================
-        let students = [];
-        let selectedStudentId = null;
-        let tempScores = [];
-        let tempExamNames = [];
-        let editStudentId = null;
-
-        let individualChartInstance = null;
-        let compareChartInstance = null;
-
-        // ============================================================
-        // 3. HÀM FIREBASE CRUD (REALTIME DATABASE)
-        // ============================================================
-
-        // Lắng nghe dữ liệu realtime
-        function listenStudents() {
-            studentsRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                students = [];
-                
-                if (data) {
-                    // Chuyển đổi object thành array
-                    Object.keys(data).forEach((key) => {
-                        const student = data[key];
-                        students.push({
-                            id: key,
-                            name: student.name || 'Chưa có tên',
-                            scores: student.scores || [],
-                            examNames: student.examNames || []
-                        });
-                    });
-                    
-                    // Sắp xếp theo tên
-                    students.sort((a, b) => a.name.localeCompare(b.name));
-                }
-                
-                updateUI();
-                updateStatus('online');
-            }, (error) => {
-                console.error('Lỗi lắng nghe:', error);
-                updateStatus('offline');
-                showToast('Lỗi kết nối Firebase!', 'error');
-            });
-        }
-
-        // Thêm học sinh mới
-        async function addStudent() {
-            const nameInput = document.getElementById('studentName');
-            const name = nameInput.value.trim();
-
-            if (!name) {
-                showToast('⚠️ Vui lòng nhập tên học sinh!', 'error');
-                return;
-            }
-
-            if (tempScores.length === 0) {
-                showToast('⚠️ Vui lòng thêm ít nhất 1 điểm!', 'error');
-                return;
-            }
-
-            try {
-                // Tạo key mới và push dữ liệu
-                const newStudentRef = studentsRef.push();
-                await newStudentRef.set({
-                    name: name,
-                    scores: tempScores,
-                    examNames: tempExamNames,
-                    createdAt: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                showToast(`✅ Đã thêm học sinh: ${name}`);
-                clearForm();
-            } catch (error) {
-                console.error('Lỗi thêm:', error);
-                showToast('❌ Lỗi khi thêm học sinh!', 'error');
-            }
-        }
-
-        // Xóa học sinh
-        async function deleteStudent(id, name) {
-            if (!confirm(`Bạn có chắc muốn xóa học sinh "${name}"?`)) return;
-
-            try {
-                await studentsRef.child(id).remove();
-                showToast(`🗑️ Đã xóa: ${name}`);
-                if (selectedStudentId === id) {
-                    selectedStudentId = null;
-                }
-            } catch (error) {
-                console.error('Lỗi xóa:', error);
-                showToast('❌ Lỗi khi xóa!', 'error');
-            }
-        }
-
-        // Cập nhật học sinh
-        async function updateStudent(id, name, scores, examNames) {
-            try {
-                await studentsRef.child(id).update({
-                    name: name,
-                    scores: scores,
-                    examNames: examNames
-                });
-                showToast(`✅ Đã cập nhật: ${name}`);
-                closeEditModal();
-            } catch (error) {
-                console.error('Lỗi cập nhật:', error);
-                showToast('❌ Lỗi khi cập nhật!', 'error');
-            }
-        }
-
-        // ============================================================
-        // 4. HÀM XỬ LÝ UI
-        // ============================================================
-
-        function updateUI() {
-            renderStudentList();
-            updateStudentCount();
-            updateCompareCheckboxes();
-            if (selectedStudentId) {
-                const student = students.find(s => s.id === selectedStudentId);
-                if (student) {
-                    renderIndividualChart(student);
-                } else {
-                    selectedStudentId = null;
-                    renderIndividualChart(null);
-                }
-            }
-            const compareTab = document.getElementById('tabCompare');
-            if (compareTab.classList.contains('active')) {
-                updateCompareChart();
-            }
-        }
-
-        function updateStatus(status) {
-            const dot = document.getElementById('statusDot');
-            const text = document.getElementById('statusText');
-            if (status === 'online') {
-                dot.className = 'dot online';
-                text.textContent = 'Đã kết nối ☁️';
+    // ============= DRAG & DROP =============
+    const dropZone = document.getElementById('dropZone');
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        });
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.name.endsWith('.json')) {
+                importFile(file);
             } else {
-                dot.className = 'dot offline';
-                text.textContent = 'Mất kết nối ⚠️';
+                showToast('❌ Vui lòng chọn file .json', 'error');
             }
         }
+    });
+    
+    dropZone.addEventListener('click', () => {
+        document.getElementById('fileInput').click();
+    });
 
-        function updateStudentCount() {
-            document.getElementById('studentCount').textContent = `${students.length} học sinh`;
-        }
-
-        function renderStudentList() {
-            const container = document.getElementById('studentListContainer');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
-
-            let filtered = students;
-            if (searchTerm) {
-                filtered = students.filter(s => s.name.toLowerCase().includes(searchTerm));
-            }
-
-            if (filtered.length === 0) {
-                container.innerHTML = `
-                            <div class="empty-state">
-                                <span>🌸</span>
-                                ${students.length === 0 ? 'Chưa có học sinh nào. Hãy thêm mới!' : 'Không tìm thấy học sinh nào!'}
-                            </div>
-                        `;
-                return;
-            }
-
-            let html = '';
-            filtered.forEach(student => {
-                const avg = student.scores.length > 0 ?
-                    (student.scores.reduce((a, b) => a + b, 0) / student.scores.length).toFixed(1) :
-                    'N/A';
-                const isSelected = student.id === selectedStudentId;
-
-                html += `
-                            <div class="student-item ${isSelected ? 'selected' : ''}" onclick="selectStudent('${student.id}')">
-                                <div>
-                                    <div class="name">${student.name}</div>
-                                    <div style="font-size:0.8rem; color:#805ad5;">
-                                        ${student.scores.length} bài · TB: ${avg}
-                                        ${student.scores.map(s => `<span class="score-tag">${s}</span>`).join('')}
-                                    </div>
-                                </div>
-                                <div class="actions">
-                                    <button class="btn btn-warning btn-sm" onclick="event.stopPropagation(); openEditModal('${student.id}')">✏️</button>
-                                    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteStudent('${student.id}','${student.name}')">🗑️</button>
-                                </div>
-                            </div>
-                        `;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function selectStudent(id) {
-            selectedStudentId = id;
-            renderStudentList();
-            const student = students.find(s => s.id === id);
-            renderIndividualChart(student);
+    // ============= RENDER =============
+    function renderAll() {
+        renderStats();
+        renderStudentList();
+        if (currentStudentId) {
+            const student = students.find(s => s.id === currentStudentId);
             if (student) {
-                document.getElementById('selectedStudentInfo').innerHTML =
-                    `👤 <strong>${student.name}</strong> - ${student.scores.length} bài kiểm tra`;
-            }
-            switchChartTab('individual');
-        }
-
-        // ============================================================
-        // 5. THÊM ĐIỂM (TẠM)
-        // ============================================================
-
-        function addScore() {
-            const examInput = document.getElementById('examName');
-            const scoreInput = document.getElementById('scoreInput');
-
-            const exam = examInput.value.trim() || `Bài ${tempScores.length + 1}`;
-            const score = parseFloat(scoreInput.value);
-
-            if (isNaN(score) || score < 0 || score > 10) {
-                showToast('⚠️ Điểm phải từ 0 đến 10!', 'error');
-                return;
-            }
-
-            tempScores.push(score);
-            tempExamNames.push(exam);
-
-            renderPreviewScores();
-            examInput.value = '';
-            scoreInput.value = '';
-            scoreInput.focus();
-
-            showToast(`➕ Đã thêm điểm: ${score} (${exam})`);
-        }
-
-        function renderPreviewScores() {
-            const container = document.getElementById('previewScores');
-            if (tempScores.length === 0) {
-                container.innerHTML = '<span style="color:#b794f4; font-size:0.9rem;">Chưa có điểm nào</span>';
-                return;
-            }
-            let html = '';
-            tempScores.forEach((s, i) => {
-                const examName = tempExamNames[i] || `Bài ${i+1}`;
-                html += `<span class="score-preview-tag">${examName}: ${s}</span>`;
-            });
-            const avg = (tempScores.reduce((a, b) => a + b, 0) / tempScores.length).toFixed(1);
-            html += `<span class="score-preview-avg">| TB: ${avg}</span>`;
-            container.innerHTML = html;
-        }
-
-        function clearForm() {
-            document.getElementById('studentName').value = '';
-            document.getElementById('examName').value = '';
-            document.getElementById('scoreInput').value = '';
-            tempScores = [];
-            tempExamNames = [];
-            renderPreviewScores();
-        }
-
-        // ============================================================
-        // 6. BIỂU ĐỒ
-        // ============================================================
-
-        function renderIndividualChart(student) {
-            const ctx = document.getElementById('individualChart').getContext('2d');
-
-            if (individualChartInstance) {
-                individualChartInstance.destroy();
-            }
-
-            if (!student || student.scores.length === 0) {
-                individualChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Chưa có dữ liệu'],
-                        datasets: [{
-                            label: 'Điểm',
-                            data: [0],
-                            backgroundColor: ['#e9d8fd'],
-                            borderColor: ['#d6bcf7'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            title: { display: true, text: '🌸 Chọn học sinh để xem biểu đồ', color: '#b794f4' }
-                        }
-                    }
-                });
-                return;
-            }
-
-            const labels = student.examNames.length === student.scores.length ?
-                student.examNames :
-                student.scores.map((_, i) => `Bài ${i+1}`);
-
-            const colors = student.scores.map(s => {
-                if (s >= 8) return '#a8e6cf';
-                if (s >= 5) return '#fbd38d';
-                return '#fbb6ce';
-            });
-
-            const borderColors = student.scores.map(s => {
-                if (s >= 8) return '#7bc6a4';
-                if (s >= 5) return '#f6ad55';
-                return '#f687b3';
-            });
-
-            individualChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: student.name,
-                        data: student.scores,
-                        backgroundColor: colors,
-                        borderColor: borderColors,
-                        borderWidth: 2,
-                        borderRadius: 8,
-                        maxBarThickness: 60
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: { 
-                                font: { weight: 'bold', size: 12 },
-                                color: '#553c9a'
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: `📊 Biểu đồ điểm - ${student.name}`,
-                            font: { size: 14, weight: 'bold' },
-                            color: '#553c9a'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            min: 0,
-                            max: 10,
-                            ticks: { stepSize: 1, color: '#805ad5' },
-                            grid: { color: 'rgba(159, 122, 234, 0.08)' }
-                        },
-                        x: {
-                            ticks: { color: '#805ad5' },
-                            grid: { color: 'rgba(159, 122, 234, 0.08)' }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ============================================================
-        // 7. SO SÁNH NHIỀU HỌC SINH
-        // ============================================================
-
-        function updateCompareCheckboxes() {
-            const container = document.getElementById('compareToggle');
-            const selectedIds = [];
-            container.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
-                selectedIds.push(cb.value);
-            });
-
-            let html = '<span style="color:#b794f4; font-size:0.9rem;">Chọn học sinh để so sánh:</span>';
-            students.forEach(s => {
-                const checked = selectedIds.includes(s.id) ? 'checked' : '';
-                html += `
-                            <label>
-                                <input type="checkbox" value="${s.id}" ${checked} onchange="updateCompareChart()" />
-                                ${s.name}
-                            </label>
-                        `;
-            });
-            container.innerHTML = html;
-        }
-
-        function updateCompareChart() {
-            const ctx = document.getElementById('compareChart').getContext('2d');
-            const container = document.getElementById('compareToggle');
-            const checked = container.querySelectorAll('input[type="checkbox"]:checked');
-
-            if (compareChartInstance) {
-                compareChartInstance.destroy();
-            }
-
-            if (checked.length === 0) {
-                compareChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Chọn học sinh để so sánh'],
-                        datasets: [{
-                            label: 'Vui lòng chọn ít nhất 2 học sinh',
-                            data: [0],
-                            backgroundColor: ['#e9d8fd']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
-                            title: {
-                                display: true,
-                                text: '🌈 Chọn học sinh để so sánh điểm',
-                                color: '#b794f4',
-                                font: { size: 13 }
-                            }
-                        }
-                    }
-                });
-                return;
-            }
-
-            const selectedStudents = checked.map(cb => students.find(s => s.id === cb.value)).filter(Boolean);
-
-            let allExamNames = [];
-            if (selectedStudents.length > 0) {
-                const maxLen = Math.max(...selectedStudents.map(s => s.scores.length));
-                const firstStudent = selectedStudents[0];
-                allExamNames = firstStudent.examNames.length === firstStudent.scores.length ?
-                    firstStudent.examNames :
-                    firstStudent.scores.map((_, i) => `Bài ${i+1}`);
-                while (allExamNames.length < maxLen) {
-                    allExamNames.push(`Bài ${allExamNames.length + 1}`);
-                }
-            }
-
-            const pastelColors = [
-                '#9f7aea', '#a8e6cf', '#fbd38d', '#fbb6ce', 
-                '#b7d0f7', '#e9d8fd', '#f6ad55', '#7bc6a4'
-            ];
-
-            const datasets = selectedStudents.map((s, idx) => {
-                const color = pastelColors[idx % pastelColors.length];
-                const data = [...s.scores];
-                while (data.length < allExamNames.length) {
-                    data.push(null);
-                }
-                return {
-                    label: s.name,
-                    data: data,
-                    backgroundColor: color + '60',
-                    borderColor: color,
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    maxBarThickness: 40
-                };
-            });
-
-            compareChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: allExamNames,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top',
-                            labels: { 
-                                font: { weight: 'bold', size: 12 },
-                                color: '#553c9a'
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: `🌈 So sánh điểm số (${selectedStudents.length} học sinh)`,
-                            font: { size: 14, weight: 'bold' },
-                            color: '#553c9a'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            min: 0,
-                            max: 10,
-                            ticks: { stepSize: 1, color: '#805ad5' },
-                            grid: { color: 'rgba(159, 122, 234, 0.08)' }
-                        },
-                        x: {
-                            ticks: { color: '#805ad5' },
-                            grid: { color: 'rgba(159, 122, 234, 0.08)' }
-                        }
-                    }
-                }
-            });
-        }
-
-        // ============================================================
-        // 8. TAB SWITCH
-        // ============================================================
-
-        function switchChartTab(tab) {
-            document.querySelectorAll('.tab-bar button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-
-            if (tab === 'individual') {
-                document.querySelector('.tab-bar button:first-child').classList.add('active');
-                document.getElementById('tabIndividual').classList.add('active');
-                if (selectedStudentId) {
-                    const student = students.find(s => s.id === selectedStudentId);
-                    renderIndividualChart(student);
-                } else {
-                    renderIndividualChart(null);
-                }
+                renderDetail(student);
             } else {
-                document.querySelector('.tab-bar button:last-child').classList.add('active');
-                document.getElementById('tabCompare').classList.add('active');
-                updateCompareChart();
+                currentStudentId = null;
+                renderDetail(null);
             }
+        } else if (students.length > 0) {
+            currentStudentId = students[0].id;
+            renderDetail(students[0]);
+        } else {
+            renderDetail(null);
         }
+    }
 
-        // ============================================================
-        // 9. MODAL CHỈNH SỬA
-        // ============================================================
-
-        function openEditModal(id) {
-            const student = students.find(s => s.id === id);
-            if (!student) return;
-
-            editStudentId = id;
-            document.getElementById('editName').value = student.name;
-            document.getElementById('editScores').value = student.scores.join(', ');
-            document.getElementById('editExams').value = student.examNames.join(', ');
-            document.getElementById('editModal').classList.add('active');
+    function renderStats() {
+        const total = students.length;
+        document.getElementById('totalStudents').textContent = total;
+        
+        if (total === 0) {
+            document.getElementById('avgAll').textContent = '0.0';
+            document.getElementById('totalMonths').textContent = '0';
+            document.getElementById('totalAbsences').textContent = '0';
+            return;
         }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.remove('active');
-            editStudentId = null;
-        }
-
-        function saveEdit() {
-            const name = document.getElementById('editName').value.trim();
-            const scoresStr = document.getElementById('editScores').value.trim();
-            const examsStr = document.getElementById('editExams').value.trim();
-
-            if (!name) {
-                showToast('⚠️ Vui lòng nhập tên!', 'error');
-                return;
+        
+        // Average
+        let allScores = [];
+        let allMonths = new Set();
+        let totalAbsences = 0;
+        
+        students.forEach(s => {
+            if (s.scores) {
+                s.scores.forEach(sc => {
+                    allScores.push(sc.score);
+                    if (sc.month) allMonths.add(sc.month);
+                });
             }
-
-            const scores = scoresStr.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n) && n >= 0 && n <= 10);
-            if (scores.length === 0) {
-                showToast('⚠️ Vui lòng nhập điểm hợp lệ (0-10, cách nhau dấu phẩy)!', 'error');
-                return;
-            }
-
-            const examNames = examsStr ? examsStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-            while (examNames.length < scores.length) {
-                examNames.push(`Bài ${examNames.length + 1}`);
-            }
-
-            updateStudent(editStudentId, name, scores, examNames);
-        }
-
-        // ============================================================
-        // 10. TOAST NOTIFICATION
-        // ============================================================
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = type === 'error' ? 'error' : '';
-            toast.style.display = 'block';
-
-            clearTimeout(toast._timeout);
-            toast._timeout = setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
-        }
-
-        // ============================================================
-        // 11. KHỞI TẠO
-        // ============================================================
-
-        document.getElementById('editModal').addEventListener('click', function(e) {
-            if (e.target === this) closeEditModal();
+            if (s.absences) totalAbsences += s.absences;
         });
+        
+        const avg = allScores.length > 0 ? (allScores.reduce((a,b) => a + b, 0) / allScores.length) : 0;
+        document.getElementById('avgAll').textContent = avg.toFixed(1);
+        document.getElementById('totalMonths').textContent = allMonths.size;
+        document.getElementById('totalAbsences').textContent = totalAbsences;
+    }
 
-        document.getElementById('scoreInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') addScore();
+    function renderStudentList() {
+        const container = document.getElementById('studentList');
+        
+        if (students.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="icon">📂</span>
+                    <p>Chưa có dữ liệu học sinh</p>
+                    <p style="font-size:0.85rem; margin-top:4px;">Hãy import file JSON để bắt đầu</p>
+                </div>
+            `;
+            document.getElementById('studentCount').textContent = '0';
+            return;
+        }
+        
+        let html = '';
+        students.forEach(s => {
+            const avg = getStudentAvg(s);
+            const active = s.id === currentStudentId ? 'active' : '';
+            html += `
+                <div class="student-item ${active}" onclick="selectStudent('${s.id}')">
+                    <span class="name">${s.name}</span>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        ${s.absences ? `<span class="absences">📅 ${s.absences} nghỉ</span>` : ''}
+                        <span class="avg">${avg.toFixed(1)}</span>
+                    </div>
+                </div>
+            `;
         });
+        
+        container.innerHTML = html;
+        document.getElementById('studentCount').textContent = students.length;
+    }
 
-        document.getElementById('studentName').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') addStudent();
+    function getStudentAvg(student) {
+        if (!student.scores || student.scores.length === 0) return 0;
+        const total = student.scores.reduce((sum, sc) => sum + sc.score, 0);
+        return total / student.scores.length;
+    }
+
+    function selectStudent(id) {
+        currentStudentId = id;
+        const student = students.find(s => s.id === id);
+        if (student) {
+            renderDetail(student);
+            renderStudentList();
+        }
+    }
+
+    // ============= RENDER DETAIL =============
+    function renderDetail(student) {
+        const section = document.getElementById('detailSection');
+        const empty = document.getElementById('detailEmpty');
+        
+        if (!student) {
+            section.classList.remove('visible');
+            empty.style.display = 'block';
+            document.getElementById('detailBadge').textContent = 'Chọn học sinh';
+            return;
+        }
+        
+        section.classList.add('visible');
+        empty.style.display = 'none';
+        document.getElementById('detailBadge').textContent = `#${student.id}`;
+        
+        // Basic info
+        document.getElementById('detailName').textContent = student.name;
+        document.getElementById('detailId').textContent = `Mã số: ${student.id}`;
+        
+        const avg = getStudentAvg(student);
+        document.getElementById('detailAvg').textContent = avg.toFixed(1);
+        document.getElementById('detailAbsences').value = student.absences || 0;
+        document.getElementById('detailNote').value = student.note || '';
+        
+        // Score table
+        renderScoreTable(student);
+        
+        // Comparison
+        renderComparison(student);
+    }
+
+    function renderScoreTable(student) {
+        const tbody = document.getElementById('scoreBody');
+        
+        if (!student.scores || student.scores.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:#6b8c7e;">Chưa có điểm</td></tr>`;
+            return;
+        }
+        
+        // Sort by month
+        const sorted = [...student.scores].sort((a, b) => a.month - b.month);
+        
+        let html = '';
+        sorted.forEach(sc => {
+            const isHigh = sc.score >= 8;
+            const isLow = sc.score < 5;
+            const cls = isHigh ? 'score-high' : (isLow ? 'score-low' : '');
+            html += `
+                <tr>
+                    <td>${getMonthName(sc.month)}</td>
+                    <td>${sc.testName || 'Kiểm tra'}</td>
+                    <td class="${cls}">${sc.score}</td>
+                </tr>
+            `;
         });
+        
+        tbody.innerHTML = html;
+    }
 
-        // Bắt đầu lắng nghe dữ liệu từ Realtime Database
-        listenStudents();
-        renderIndividualChart(null);
+    function renderComparison(student) {
+        const compareMonth = document.getElementById('compareMonth');
+        const compareClass = document.getElementById('compareClass');
+        
+        // So sánh với tháng trước
+        if (student.scores && student.scores.length >= 2) {
+            const sorted = [...student.scores].sort((a, b) => a.month - b.month);
+            const last = sorted[sorted.length - 1];
+            const prev = sorted[sorted.length - 2];
+            const diff = last.score - prev.score;
+            
+            if (diff > 0) {
+                compareMonth.innerHTML = `<span class="trend-up">📈 Tăng ${diff.toFixed(1)} điểm</span>`;
+            } else if (diff < 0) {
+                compareMonth.innerHTML = `<span class="trend-down">📉 Giảm ${Math.abs(diff).toFixed(1)} điểm</span>`;
+            } else {
+                compareMonth.textContent = '➖ Không đổi';
+            }
+        } else {
+            compareMonth.textContent = '📊 Chưa đủ dữ liệu';
+        }
+        
+        // So sánh với trung bình lớp
+        const studentAvg = getStudentAvg(student);
+        const allAvg = students.length > 0 ? students.reduce((sum, s) => sum + getStudentAvg(s), 0) / students.length : 0;
+        
+        if (allAvg > 0) {
+            const diff = studentAvg - allAvg;
+            if (diff > 1) {
+                compareClass.innerHTML = `<span class="trend-up">🌟 Cao hơn ${diff.toFixed(1)} điểm so với TB</span>`;
+            } else if (diff > 0) {
+                compareClass.innerHTML = `<span class="trend-up">📈 Cao hơn ${diff.toFixed(1)} điểm</span>`;
+            } else if (diff < -1) {
+                compareClass.innerHTML = `<span class="trend-down">📉 Thấp hơn ${Math.abs(diff).toFixed(1)} điểm so với TB</span>`;
+            } else if (diff < 0) {
+                compareClass.innerHTML = `<span class="trend-down">📉 Thấp hơn ${Math.abs(diff).toFixed(1)} điểm</span>`;
+            } else {
+                compareClass.textContent = '➖ Bằng trung bình lớp';
+            }
+        } else {
+            compareClass.textContent = '📊 Chưa có dữ liệu lớp';
+        }
+    }
 
-        console.log('🌸 Ứng dụng đã sẵn sàng với Realtime Database!');
-        console.log('📌 Dữ liệu được lưu tại: https://hethong-tuvung-default-rtdb.firebaseio.com/students');
-        console.log('💡 Bạn có thể truy cập từ mọi thiết bị!');
-    </script>
+    // ============= UPDATE FUNCTIONS =============
+    function updateAbsences() {
+        const student = students.find(s => s.id === currentStudentId);
+        if (!student) return;
+        
+        const val = parseInt(document.getElementById('detailAbsences').value) || 0;
+        student.absences = val;
+        renderStats();
+        renderStudentList();
+        showToast(`✅ Đã cập nhật số buổi nghỉ cho ${student.name}: ${val} buổi`);
+    }
 
+    function updateNote() {
+        const student = students.find(s => s.id === currentStudentId);
+        if (!student) return;
+        
+        student.note = document.getElementById('detailNote').value;
+        showToast(`✅ Đã lưu nhận xét cho ${student.name}`);
+    }
+
+    // ============= CLEAR DATA =============
+    function clearData() {
+        if (!confirm('Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đã import?')) return;
+        
+        students = [];
+        currentStudentId = null;
+        document.getElementById('fileInfo').classList.remove('show');
+        document.getElementById('importArea').classList.remove('has-data');
+        renderAll();
+        showToast('🗑️ Đã xóa toàn bộ dữ liệu');
+    }
+
+    // ============= EXPORT DATA =============
+    function exportData() {
+        if (students.length === 0) {
+            showToast('❌ Không có dữ liệu để xuất', 'error');
+            return;
+        }
+        
+        const dataStr = JSON.stringify(students, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `students_data_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('✅ Đã xuất dữ liệu thành công');
+    }
+
+    // ============= SAMPLE DATA =============
+    function loadSampleData() {
+        const sample = [
+            {
+                id: 'HS001',
+                name: 'Nguyễn Văn An',
+                absences: 2,
+                note: 'Học sinh chăm chỉ, có tiến bộ rõ rệt.',
+                scores: [
+                    { month: 1, testName: 'Kiểm tra đầu vào', score: 6.5 },
+                    { month: 2, testName: 'Giữa kỳ 1', score: 7.0 },
+                    { month: 3, testName: 'Cuối kỳ 1', score: 8.5 },
+                    { month: 4, testName: 'Giữa kỳ 2', score: 8.0 }
+                ]
+            },
+            {
+                id: 'HS002',
+                name: 'Trần Thị Bình',
+                absences: 0,
+                note: 'Rất chăm chỉ, khả năng nghe nói tốt.',
+                scores: [
+                    { month: 1, testName: 'Kiểm tra đầu vào', score: 8.0 },
+                    { month: 2, testName: 'Giữa kỳ 1', score: 8.5 },
+                    { month: 3, testName: 'Cuối kỳ 1', score: 9.0 },
+                    { month: 4, testName: 'Giữa kỳ 2', score: 9.5 }
+                ]
+            },
+            {
+                id: 'HS003',
+                name: 'Lê Văn Cường',
+                absences: 3,
+                note: 'Cần cố gắng hơn ở phần từ vựng.',
+                scores: [
+                    { month: 1, testName: 'Kiểm tra đầu vào', score: 5.0 },
+                    { month: 2, testName: 'Giữa kỳ 1', score: 5.5 },
+                    { month: 3, testName: 'Cuối kỳ 1', score: 6.0 },
+                    { month: 4, testName: 'Giữa kỳ 2', score: 6.5 }
+                ]
+            }
+        ];
+        
+        students = sample;
+        importedFileName = 'sample_data.json';
+        document.getElementById('fileInfo').classList.add('show');
+        document.getElementById('fileName').textContent = 'sample_data.json';
+        document.getElementById('fileSize').textContent = '(Dữ liệu mẫu)';
+        document.getElementById('importArea').classList.add('has-data');
+        currentStudentId = students[0].id;
+        renderAll();
+        showToast('✅ Đã tải dữ liệu mẫu (3 học sinh)');
+    }
+
+    // ============= INIT =============
+    renderAll();
+
+    // Load sample data if empty
+    if (students.length === 0) {
+        // Uncomment để tự động load mẫu khi mở trang
+        // loadSampleData();
+    }
+
+    // Thêm nút load mẫu vào header
+    document.querySelector('.header-right').insertAdjacentHTML('afterbegin', `
+        <button class="btn btn-white" onclick="loadSampleData()" style="background:#d8eddd; color:#2d6a4f;">📋 Tải mẫu</button>
+    `);
+</script>
 </body>
 </html>
