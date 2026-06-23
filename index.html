@@ -8,7 +8,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        /* ... CSS giữ nguyên như cũ ... */
         * {
             margin: 0;
             padding: 0;
@@ -1036,8 +1035,6 @@
 </head>
 <body>
 
-<!-- Phần HTML giữ nguyên như cũ, tôi không thay đổi -->
-
 <div class="login-overlay" id="loginOverlay">
     <div class="login-box">
         <div class="lock-icon">🔐</div>
@@ -1271,7 +1268,6 @@
     const ADMIN_EMAIL = 'ptquynhnhi05121999@gmail.com';
     const ADMIN_PASSWORD = 'admin123';
 
-    // ⭐ QUAN TRỌNG: Đường dẫn riêng cho app quản lý học tập
     const CLASS_PATH = 'classData/quynh_nhi_class';
 
     let students = [];
@@ -1334,9 +1330,9 @@
         el.textContent = `${icons[status] || '☁️'} ${texts[status] || 'Đồng bộ'}${message ? ' ' + message : ''}`;
     }
 
-    // ============ CÁC HÀM FIREBASE SỬA LẠI ============
+    // ============ CÁC HÀM FIREBASE ============
 
-    function syncToFirebase() {
+    function syncToFirebase(silent = false) {
         if (!isAdmin) return;
         if (isSyncing) return;
         isSyncing = true;
@@ -1356,12 +1352,17 @@
             .then(() => {
                 isSyncing = false;
                 updateSyncStatus('synced');
-                showToast('✅ Đã đồng bộ dữ liệu lên Firebase');
+                // Chỉ hiện toast khi không phải silent (không hiện khi sync tự động)
+                if (!silent) {
+                    showToast('✅ Đã đồng bộ dữ liệu lên Firebase');
+                }
             })
             .catch((error) => {
                 isSyncing = false;
                 updateSyncStatus('error', error.message);
-                showToast('❌ Lỗi đồng bộ: ' + error.message, 'error');
+                if (!silent) {
+                    showToast('❌ Lỗi đồng bộ: ' + error.message, 'error');
+                }
             });
     }
 
@@ -1413,7 +1414,7 @@
         if (syncInterval) clearInterval(syncInterval);
         syncInterval = setInterval(() => {
             if (isAdmin && students.length > 0) {
-                syncToFirebase();
+                syncToFirebase(true); // silent mode - không hiện toast
             }
         }, 30000);
 
@@ -1441,7 +1442,7 @@
         }
     }
 
-    // ============ CÁC HÀM QUẢN LÝ KHÁC ============
+    // ============ CÁC HÀM QUẢN LÝ ============
 
     function getUrlParam(p) {
         return new URLSearchParams(window.location.search).get(p);
@@ -1557,7 +1558,7 @@
         event.target.value = '';
     }
 
-    // ============ HÀM IMPORT ĐÃ SỬA ============
+    // ============ HÀM IMPORT ============
 
     function importFile(file) {
         if (!isAdmin) {
@@ -1602,7 +1603,7 @@
                         return db.ref(`${CLASS_PATH}/updatedAt`).set(firebase.database.ServerValue.TIMESTAMP);
                     })
                     .then(() => {
-                        showToast(`✅ Import ${students.length} học sinh thành công và đã lưu lên Firebase`);
+                        showToast(`✅ Import ${students.length} học sinh thành công`);
                         updateSyncStatus('synced', `(${students.length} học sinh)`);
                         loadFromFirebase();
                     })
@@ -1633,7 +1634,7 @@
     });
     dz.addEventListener('click', () => document.getElementById('fileInput').click());
 
-    // ============ CÁC HÀM CÒN LẠI GIỮ NGUYÊN NHƯNG SỬA PATH ============
+    // ============ CÁC HÀM HIỂN THỊ ============
 
     function renderAll() {
         renderStats();
@@ -1685,6 +1686,7 @@
             .then(() => {
                 renderAll();
                 showToast(`✅ Đã xóa học sinh "${student.name}"`);
+                syncToFirebase(true);
             })
             .catch((error) => {
                 showToast('❌ Lỗi xóa trên Firebase: ' + error.message, 'error');
@@ -1727,6 +1729,8 @@
         populateCompareCheckboxes();
     }
 
+    // ============ HÀM RENDER CHI TIẾT - ĐÃ SỬA LỖI ============
+
     function renderDetailById(id) {
         const student = students.find(s => s.id === id);
         if (!student) {
@@ -1751,27 +1755,35 @@
             tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#6b8c7e;">Chưa có điểm</td></tr>`;
         } else {
             let html = '';
-            [...nums].sort((a,b) => a.month - b.month).forEach((sc, index) => {
+            // Sắp xếp theo tháng để hiển thị đúng thứ tự
+            const sortedScores = [...nums].sort((a,b) => {
+                if (a.month !== b.month) return a.month - b.month;
+                return (a.testName || '').localeCompare(b.testName || '');
+            });
+            
+            sortedScores.forEach((sc) => {
+                // Tìm index thực tế trong mảng gốc để xóa đúng
+                const realIndex = nums.indexOf(sc);
                 const cls = sc.score >= 8 ? 'score-high' : (sc.score < 5 ? 'score-low' : '');
                 const isAdmin = isAdminMode;
                 html += `<tr>
                     <td>
                         ${isAdmin ? `<input type="number" min="1" max="12" value="${sc.month}" 
-                            onchange="updateScore(${index}, 'month', this.value)" 
-                            style="width:80px;">` : getMonthName(sc.month)}
+                            onchange="updateScore(${realIndex}, 'month', this.value)" 
+                            style="width:80px;" step="1">` : getMonthName(sc.month)}
                     </td>
                     <td>
                         ${isAdmin ? `<input type="text" value="${sc.testName || 'Kiểm tra'}" 
-                            onchange="updateScore(${index}, 'testName', this.value)" 
-                            style="min-width:100px;">` : (sc.testName || 'Kiểm tra')}
+                            onchange="updateScore(${realIndex}, 'testName', this.value)" 
+                            style="min-width:120px;">` : (sc.testName || 'Kiểm tra')}
                     </td>
                     <td>
-                        ${isAdmin ? `<input type="number" min="0" max="10" step="0.5" value="${sc.score}" 
-                            onchange="updateScore(${index}, 'score', parseFloat(this.value))" 
-                            style="width:70px;" class="${cls}">` : `<span class="${cls}">${sc.score}</span>`}
+                        ${isAdmin ? `<input type="number" min="0" max="10" step="0.01" value="${sc.score}" 
+                            onchange="updateScore(${realIndex}, 'score', parseFloat(this.value))" 
+                            style="width:80px;" class="${cls}">` : `<span class="${cls}">${sc.score}</span>`}
                     </td>
-                    <td style="display:${isAdmin ? '' : 'none'};">
-                        <button class="score-action-btn" style="background:#e74c3c; color:white;" onclick="deleteScore(${index})">🗑️</button>
+                    <td style="display:${isAdmin ? '' : 'none'}; text-align:center;">
+                        <button class="score-action-btn" style="background:#e74c3c; color:white; padding:4px 12px;" onclick="deleteScore(${realIndex})">🗑️ Xóa</button>
                     </td>
                 </tr>`;
             });
@@ -1779,34 +1791,57 @@
         }
     }
 
+    // ============ HÀM CẬP NHẬT ĐIỂM - ĐÃ SỬA ============
+
     function updateScore(index, field, value) {
         if (!isAdmin) return;
         const student = students.find(s => s.id === currentStudentId);
         if (!student || !student.scores || index >= student.scores.length) return;
         
         if (field === 'month') {
-            student.scores[index].month = parseInt(value) || 1;
+            const monthVal = parseInt(value);
+            if (isNaN(monthVal) || monthVal < 1 || monthVal > 12) {
+                showToast('❌ Tháng phải từ 1 đến 12', 'error');
+                return;
+            }
+            student.scores[index].month = monthVal;
         } else if (field === 'testName') {
-            student.scores[index].testName = value;
+            student.scores[index].testName = value || 'Kiểm tra';
         } else if (field === 'score') {
-            student.scores[index].score = parseFloat(value) || 0;
+            const scoreVal = parseFloat(value);
+            if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 10) {
+                showToast('❌ Điểm phải từ 0 đến 10', 'error');
+                return;
+            }
+            student.scores[index].score = scoreVal;
         }
         
         renderAll();
-        syncToFirebase();
+        syncToFirebase(true);
         showToast('✅ Đã cập nhật điểm');
     }
+
+    // ============ HÀM XÓA ĐIỂM - ĐÃ SỬA ============
 
     function deleteScore(index) {
         if (!isAdmin) return;
         if (!confirm('Xóa điểm này?')) return;
         const student = students.find(s => s.id === currentStudentId);
         if (!student || !student.scores) return;
+        
+        if (index < 0 || index >= student.scores.length) {
+            showToast('❌ Lỗi: Không tìm thấy điểm cần xóa', 'error');
+            return;
+        }
+        
+        const deletedScore = student.scores[index];
         student.scores.splice(index, 1);
         renderAll();
-        syncToFirebase();
-        showToast('✅ Đã xóa điểm');
+        syncToFirebase(true);
+        showToast(`✅ Đã xóa điểm: ${deletedScore.testName || 'Kiểm tra'} (${deletedScore.score})`);
     }
+
+    // ============ HÀM THÊM ĐIỂM - ĐÃ SỬA ============
 
     function addScoreRow() {
         if (!isAdmin) return;
@@ -1816,9 +1851,20 @@
             return;
         }
         if (!student.scores) student.scores = [];
-        student.scores.push({ month: 1, testName: 'Kiểm tra mới', score: 0 });
+        
+        // Tìm tháng lớn nhất hiện tại
+        let maxMonth = 1;
+        student.scores.forEach(sc => {
+            if (sc.month && sc.month > maxMonth) maxMonth = sc.month;
+        });
+        
+        student.scores.push({ 
+            month: maxMonth, 
+            testName: `Bài kiểm tra mới (${student.scores.length + 1})`, 
+            score: 0 
+        });
         renderAll();
-        syncToFirebase();
+        syncToFirebase(true);
         showToast('✅ Đã thêm dòng điểm mới');
     }
 
@@ -1828,7 +1874,7 @@
         if (!student) return;
         student.absences = parseInt(document.getElementById('detailAbsences').value) || 0;
         renderAll();
-        syncToFirebase();
+        syncToFirebase(true);
         showToast(`✅ Đã cập nhật nghỉ: ${student.absences} buổi`);
     }
 
@@ -1837,7 +1883,7 @@
         const student = students.find(s => s.id === currentStudentId);
         if (!student) return;
         student.note = document.getElementById('detailNote').value;
-        syncToFirebase();
+        syncToFirebase(true);
         showToast(`✅ Đã lưu nhận xét`);
     }
 
@@ -1876,7 +1922,7 @@
         showToast('✅ Đã xuất dữ liệu');
     }
 
-    // ============ CÁC HÀM HIỂN THỊ ============
+    // ============ CÁC HÀM HIỂN THỊ KHÁC ============
 
     function populateStudentSelect() {
         const select = document.getElementById('studentSelect');
@@ -2331,7 +2377,6 @@
     }
 
     function clearDefaultData() {
-        // Không xóa dữ liệu mặc định nữa để tránh mất dữ liệu cũ
         console.log('App quản lý học tập khởi động với path:', CLASS_PATH);
     }
 
