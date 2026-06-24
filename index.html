@@ -1332,14 +1332,12 @@
 
     // ============ CÁC HÀM FIREBASE ============
 
-    // ⭐ SỬA: Dùng update() thay vì set() để không ghi đè
     function syncToFirebase(silent = false) {
         if (!isAdmin) return;
         if (isSyncing) return;
         isSyncing = true;
         updateSyncStatus('syncing');
 
-        // Cập nhật từng học sinh riêng lẻ
         const updates = {};
         students.forEach((student) => {
             if (student.id) {
@@ -1557,7 +1555,7 @@
         event.target.value = '';
     }
 
-    // ============ ⭐ HÀM IMPORT - GỘP DỮ LIỆU ============
+    // ============ HÀM IMPORT - GỘP DỮ LIỆU ============
 
     function importFile(file) {
         if (!isAdmin) {
@@ -1569,48 +1567,38 @@
             try {
                 const data = JSON.parse(e.target.result);
                 
-                // Nếu data là object (1 học sinh) thì chuyển thành array
                 let newStudents = [];
                 if (!Array.isArray(data)) {
-                    // Nếu là object đơn lẻ
                     if (data.id && data.name) {
                         newStudents = [data];
                     } else {
-                        // Nếu là object với key là id
                         newStudents = Object.values(data);
                     }
                 } else {
                     newStudents = data;
                 }
                 
-                // Kiểm tra dữ liệu hợp lệ
                 newStudents.forEach((s, i) => {
                     if (!s.id || !s.name) throw new Error(`Học sinh #${i+1} thiếu id hoặc name`);
                 });
                 
-                // ⭐ QUAN TRỌNG: GỘP dữ liệu thay vì ghi đè
-                // Tạo map từ danh sách hiện tại
                 const existingMap = {};
                 students.forEach(s => {
                     existingMap[s.id] = s;
                 });
                 
-                // Gộp dữ liệu mới vào
                 let addedCount = 0;
                 let updatedCount = 0;
                 newStudents.forEach(newStudent => {
                     if (existingMap[newStudent.id]) {
-                        // Học sinh đã tồn tại - cập nhật
                         existingMap[newStudent.id] = newStudent;
                         updatedCount++;
                     } else {
-                        // Học sinh mới - thêm vào
                         existingMap[newStudent.id] = newStudent;
                         addedCount++;
                     }
                 });
                 
-                // Chuyển map thành array
                 students = Object.values(existingMap);
                 importedFileName = file.name;
                 
@@ -1628,7 +1616,6 @@
                 showToast(`📥 Import: +${addedCount} mới, ${updatedCount} cập nhật. Tổng: ${students.length} học sinh`, 'info');
                 updateSyncStatus('syncing', 'Đang lưu...');
                 
-                // Lưu toàn bộ dữ liệu đã merge lên Firebase
                 const saveData = {};
                 students.forEach((student) => {
                     if (student.id) {
@@ -2271,6 +2258,7 @@
         });
     }
 
+    // ============ HÀM CẬP NHẬT BIỂU ĐỒ SO SÁNH (DẠNG CỘT) ============
     function updateComparisonChart() {
         const ctx = document.getElementById('comparisonChart').getContext('2d');
         if (comparisonChartInstance) { comparisonChartInstance.destroy(); comparisonChartInstance = null; }
@@ -2278,8 +2266,8 @@
         const student = students.find(s => s.id === currentStudentId);
         if (!student) {
             comparisonChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: ['Chọn học sinh'], datasets: [{ label: 'Điểm', data: [0], borderColor: '#52b788' }] },
+                type: 'bar',
+                data: { labels: ['Chọn học sinh'], datasets: [{ label: 'Điểm', data: [0], backgroundColor: '#52b788' }] },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
@@ -2302,8 +2290,8 @@
 
         if (compareStudents.length === 0) {
             comparisonChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: ['Chọn học sinh để so sánh'], datasets: [{ label: 'Điểm', data: [0], borderColor: '#52b788' }] },
+                type: 'bar',
+                data: { labels: ['Chọn học sinh để so sánh'], datasets: [{ label: 'Điểm', data: [0], backgroundColor: '#52b788' }] },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
@@ -2342,8 +2330,8 @@
         
         if (sortedMonths.length === 0) {
             comparisonChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: { labels: ['Không có dữ liệu'], datasets: [{ label: 'Điểm', data: [0], borderColor: '#52b788' }] },
+                type: 'bar',
+                data: { labels: ['Không có dữ liệu'], datasets: [{ label: 'Điểm', data: [0], backgroundColor: '#52b788' }] },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false, 
@@ -2368,19 +2356,18 @@
             return {
                 label: s.name,
                 data: data,
+                backgroundColor: colors[index % colors.length] + '99',
                 borderColor: colors[index % colors.length],
-                backgroundColor: colors[index % colors.length] + '33',
-                fill: false,
-                tension: 0.3,
-                pointRadius: 4,
-                pointBorderColor: colors[index % colors.length],
-                pointBorderWidth: 2,
+                borderWidth: 2,
+                borderRadius: 4,
+                barPercentage: 0.8,
+                categoryPercentage: 0.7,
                 spanGaps: true
             };
         });
 
         comparisonChartInstance = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: { labels: labels, datasets: datasets },
             options: {
                 responsive: true,
