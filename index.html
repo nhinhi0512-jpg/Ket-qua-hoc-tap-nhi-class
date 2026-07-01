@@ -703,6 +703,7 @@
             border-radius: 16px;
             padding: 20px 24px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
         }
 
         .student-view .score-list h3 {
@@ -811,6 +812,32 @@
             font-weight: 600;
         }
 
+        /* Phần so sánh - chuyển xuống cuối */
+        .comparison-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 2px solid #d8eddd;
+        }
+
+        .comparison-section .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2d6a4f;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comparison-section .section-title .badge {
+            background: #d8eddd;
+            color: #2d6a4f;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
         .comparison-controls {
             display: flex;
             gap: 12px;
@@ -870,7 +897,6 @@
             border-radius: 16px;
             padding: 24px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            margin-bottom: 24px;
         }
 
         .comparison-chart-container h3 {
@@ -925,6 +951,38 @@
         .comparison-chart-wrapper {
             position: relative;
             height: 300px;
+        }
+
+        /* Thêm style cho bảng điểm trung bình theo tháng */
+        .month-avg-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+
+        .month-avg-table th {
+            background: #e8f5ee;
+            color: #1a3a2e;
+            padding: 6px 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .month-avg-table td {
+            padding: 6px 12px;
+            text-align: center;
+            border-bottom: 1px solid #eef6f2;
+        }
+
+        .month-avg-table .avg-row {
+            background: #f8fbf9;
+            font-weight: 600;
+        }
+
+        .month-avg-table .avg-row td {
+            border-top: 2px solid #2d6a4f;
+            color: #2d6a4f;
         }
 
         .toast {
@@ -1240,6 +1298,13 @@
         .month-tab.active .count {
             background: rgba(255,255,255,0.2);
         }
+
+        .no-data-msg {
+            color: #6b8c7e;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -1412,6 +1477,12 @@
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- Bảng điểm trung bình theo tháng - Admin -->
+                        <div style="margin-top:16px;">
+                            <div style="font-weight:600; color:#2d6a4f; font-size:0.9rem; margin-bottom:8px;">📊 Điểm trung bình theo tháng</div>
+                            <div id="adminMonthAvgContainer"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -1451,27 +1522,6 @@
             </div>
         </div>
 
-        <div class="comparison-controls">
-            <span class="label">📊 So sánh với:</span>
-            <div class="student-checkboxes" id="compareCheckboxes">
-                <!-- Checkboxes will be generated here -->
-            </div>
-        </div>
-
-        <div class="comparison-chart-container">
-            <h3>
-                <span>📈 Biểu đồ so sánh điểm theo tháng</span>
-                <div class="chart-controls">
-                    <button onclick="changeComparisonMonth(-1)">◀</button>
-                    <select id="comparisonMonthSelect" onchange="updateComparisonChart()"></select>
-                    <button onclick="changeComparisonMonth(1)">▶</button>
-                </div>
-            </h3>
-            <div class="comparison-chart-wrapper">
-                <canvas id="comparisonChart"></canvas>
-            </div>
-        </div>
-
         <div class="chart-container">
             <h3>
                 <span>📈 Biểu đồ điểm theo tháng</span>
@@ -1499,11 +1549,46 @@
             <div id="viewScoreList">
                 <p style="color:#6b8c7e; text-align:center; padding:20px 0;">Chọn học sinh để xem điểm</p>
             </div>
+            
+            <!-- Bảng điểm trung bình theo tháng - View -->
+            <div style="margin-top:16px; padding-top:16px; border-top:1px solid #eef6f2;">
+                <div style="font-weight:600; color:#2d6a4f; font-size:0.9rem; margin-bottom:8px;">📊 Điểm trung bình theo tháng</div>
+                <div id="viewMonthAvgContainer"></div>
+            </div>
         </div>
 
         <div class="note-box" id="viewNoteBox" style="display:none;">
             <div class="label">📝 Nhận xét của giáo viên</div>
             <div class="content" id="viewNoteContent">-</div>
+        </div>
+
+        <!-- PHẦN SO SÁNH - CHUYỂN XUỐNG DƯỚI CÙNG -->
+        <div class="comparison-section">
+            <div class="section-title">
+                📊 So sánh điểm với học sinh khác
+                <span class="badge" id="compareCount">0</span>
+            </div>
+
+            <div class="comparison-controls">
+                <span class="label">👥 Chọn học sinh để so sánh:</span>
+                <div class="student-checkboxes" id="compareCheckboxes">
+                    <!-- Checkboxes sẽ được tạo ở đây -->
+                </div>
+            </div>
+
+            <div class="comparison-chart-container">
+                <h3>
+                    <span>📈 Biểu đồ so sánh điểm theo tháng</span>
+                    <div class="chart-controls">
+                        <button onclick="changeComparisonMonth(-1)">◀</button>
+                        <select id="comparisonMonthSelect" onchange="updateComparisonChart()"></select>
+                        <button onclick="changeComparisonMonth(1)">▶</button>
+                    </div>
+                </h3>
+                <div class="comparison-chart-wrapper">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1545,9 +1630,8 @@
 
     let currentChartMonth = null;
     let currentComparisonMonth = null;
-    let currentAdminMonthFilter = null; // Lọc tháng trong admin
+    let currentAdminMonthFilter = null;
 
-    // Kiểm tra URL param mode=admin
     const isAdminModeFromURL = new URLSearchParams(window.location.search).get('mode') === 'admin';
 
     function showToast(message, type = 'success') {
@@ -1586,6 +1670,87 @@
         const nums = getNumericScores(student);
         if (nums.length === 0) return 0;
         return nums.reduce((a,b) => a + b.score, 0) / nums.length;
+    }
+
+    // Hàm tính điểm trung bình theo tháng
+    function getMonthAvg(student, month) {
+        if (!student.scores) return null;
+        const scores = student.scores.filter(sc => sc.month === month && typeof sc.score === 'number');
+        if (scores.length === 0) return null;
+        return scores.reduce((a,b) => a + b.score, 0) / scores.length;
+    }
+
+    // Hàm render bảng điểm trung bình theo tháng
+    function renderMonthAvgTable(containerId, student) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        if (!student || !student.scores || student.scores.length === 0) {
+            container.innerHTML = '<div class="no-data-msg">Chưa có dữ liệu điểm</div>';
+            return;
+        }
+
+        const months = getAllMonths();
+        if (months.length === 0) {
+            container.innerHTML = '<div class="no-data-msg">Chưa có dữ liệu điểm</div>';
+            return;
+        }
+
+        let html = `
+            <table class="month-avg-table">
+                <thead>
+                    <tr>
+                        <th>Tháng</th>
+                        <th>Số bài</th>
+                        <th>Điểm TB</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        let totalScores = 0;
+        let totalCount = 0;
+
+        months.forEach(m => {
+            const scores = (student.scores || []).filter(sc => sc.month === m && typeof sc.score === 'number');
+            const count = scores.length;
+            if (count > 0) {
+                const avg = scores.reduce((a,b) => a + b.score, 0) / count;
+                totalScores += scores.reduce((a,b) => a + b.score, 0);
+                totalCount += count;
+                html += `
+                    <tr>
+                        <td><strong>${getMonthName(m)}</strong></td>
+                        <td>${count}</td>
+                        <td class="score-high">${avg.toFixed(1)}</td>
+                    </tr>
+                `;
+            } else {
+                html += `
+                    <tr>
+                        <td><strong>${getMonthName(m)}</strong></td>
+                        <td>0</td>
+                        <td style="color:#6b8c7e;">-</td>
+                    </tr>
+                `;
+            }
+        });
+
+        // Dòng tổng
+        const overallAvg = totalCount > 0 ? totalScores / totalCount : 0;
+        html += `
+                </tbody>
+                <tfoot>
+                    <tr class="avg-row">
+                        <td><strong>📊 Tổng</strong></td>
+                        <td>${totalCount}</td>
+                        <td><strong>${overallAvg.toFixed(1)}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        `;
+
+        container.innerHTML = html;
     }
 
     function updateSyncStatus(status, message = '') {
@@ -2111,7 +2276,7 @@
 
     function selectStudent(id) {
         currentStudentId = id;
-        currentAdminMonthFilter = null; // Reset filter khi đổi học sinh
+        currentAdminMonthFilter = null;
         renderStudentList();
         renderDetailById(id);
         renderStudentView();
@@ -2171,12 +2336,10 @@
         const tbody = document.getElementById('scoreBody');
         let scores = student.scores || [];
         
-        // Lọc theo tháng nếu có
         if (currentAdminMonthFilter !== null) {
             scores = scores.filter(sc => sc.month === currentAdminMonthFilter);
         }
 
-        // Sắp xếp theo tháng
         scores.sort((a, b) => (a.month || 0) - (b.month || 0));
         
         if (scores.length === 0) {
@@ -2186,7 +2349,6 @@
             scores.forEach((sc, idx) => {
                 const cls = sc.score >= 8 ? 'score-high' : (sc.score < 5 ? 'score-low' : '');
                 const isAdmin = isAdminMode;
-                // Tìm index gốc để cập nhật
                 const originalIdx = student.scores.indexOf(sc);
                 html += `<tr>
                     <td>
@@ -2211,6 +2373,9 @@
             });
             tbody.innerHTML = html;
         }
+
+        // Render bảng điểm TB theo tháng cho Admin
+        renderMonthAvgTable('adminMonthAvgContainer', student);
     }
 
     // ============ HÀM CẬP NHẬT ĐIỂM ============
@@ -2269,7 +2434,6 @@
         }
         if (!student.scores) student.scores = [];
         
-        // Hỏi tháng muốn thêm
         const monthInput = prompt('Nhập tháng cho bài kiểm tra mới (1-12):', 
             currentAdminMonthFilter !== null ? currentAdminMonthFilter : '1');
         if (monthInput === null) return;
@@ -2289,7 +2453,6 @@
             score: 0 
         });
         
-        // Tự động lọc theo tháng vừa thêm
         currentAdminMonthFilter = month;
         
         renderAll();
@@ -2453,13 +2616,16 @@
         const container = document.getElementById('compareCheckboxes');
         if (students.length <= 1) {
             container.innerHTML = '<span style="color:#6b8c7e; font-size:0.9rem;">Chưa có học sinh khác để so sánh</span>';
+            document.getElementById('compareCount').textContent = '0';
             return;
         }
         
         let html = '';
+        let checkedCount = 0;
         students.forEach(s => {
             if (s.id !== currentStudentId) {
                 const checked = sessionStorage.getItem(`compare_${s.id}`) === 'true' ? 'checked' : '';
+                if (checked) checkedCount++;
                 html += `
                     <label class="${checked ? 'checked-label' : ''}">
                         <input type="checkbox" value="${s.id}" ${checked} onchange="toggleCompareStudent('${s.id}', this.checked)">
@@ -2469,22 +2635,28 @@
             }
         });
         container.innerHTML = html;
+        document.getElementById('compareCount').textContent = checkedCount;
         updateComparisonChart();
     }
 
     function toggleCompareStudent(id, checked) {
         sessionStorage.setItem(`compare_${id}`, checked.toString());
         const labels = document.querySelectorAll('#compareCheckboxes label');
+        let count = 0;
         labels.forEach(label => {
             const input = label.querySelector('input');
             if (input && input.value === id) {
                 if (checked) {
                     label.classList.add('checked-label');
+                    count++;
                 } else {
                     label.classList.remove('checked-label');
                 }
+            } else if (input && input.checked) {
+                count++;
             }
         });
+        document.getElementById('compareCount').textContent = count;
         updateComparisonChart();
     }
 
@@ -2516,6 +2688,8 @@
             document.getElementById('viewScoreList').innerHTML = '<p style="color:#6b8c7e;text-align:center;padding:20px 0;">Chọn học sinh để xem điểm</p>';
             absBadge.style.display = 'none';
             noteBox.style.display = 'none';
+            // Render bảng TB tháng trống
+            document.getElementById('viewMonthAvgContainer').innerHTML = '<div class="no-data-msg">Chọn học sinh để xem</div>';
             if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
             if (comparisonChartInstance) { comparisonChartInstance.destroy(); comparisonChartInstance = null; }
             return;
@@ -2530,7 +2704,6 @@
             absBadge.style.display = 'none';
         }
 
-        // Lọc điểm theo tháng cho view
         const filterSelect = document.getElementById('viewMonthFilter');
         const filterMonth = filterSelect.value !== 'all' ? parseInt(filterSelect.value) : null;
         
@@ -2539,7 +2712,6 @@
             nums = nums.filter(sc => sc.month === filterMonth);
         }
 
-        // Sắp xếp theo tháng
         nums.sort((a, b) => (a.month || 0) - (b.month || 0));
 
         const avg = nums.length > 0 ? nums.reduce((a,b) => a + b.score, 0) / nums.length : 0;
@@ -2570,6 +2742,9 @@
             });
             listContainer.innerHTML = html;
         }
+
+        // Render bảng điểm TB theo tháng cho View
+        renderMonthAvgTable('viewMonthAvgContainer', student);
 
         if (student.note) {
             noteBox.style.display = 'block';
@@ -2632,7 +2807,6 @@
             currentChartMonth = null;
         }
 
-        // Sắp xếp theo tháng
         nums.sort((a, b) => (a.month || 0) - (b.month || 0));
 
         if (nums.length === 0) {
@@ -2783,7 +2957,7 @@
 
         const datasets = allStudents.map((s, index) => {
             const data = sortedMonths.map(m => {
-                const scores = (s.scores || []).filter(sc => sc.month === m);
+                const scores = (s.scores || []).filter(sc => sc.month === m && typeof sc.score === 'number');
                 if (scores.length === 0) return null;
                 return scores.reduce((a,b) => a + b.score, 0) / scores.length;
             });
@@ -2837,7 +3011,6 @@
     }
 
     function init() {
-        // Thêm các nút admin vào header
         const adminButtonsHTML = `
             <button class="btn btn-white admin-only" onclick="exportData()" style="background:#d8eddd; color:#2d6a4f;">📥 Xuất JSON</button>
             <button class="btn btn-outline admin-only" onclick="document.getElementById('fileInput').click()">📤 Import JSON</button>
